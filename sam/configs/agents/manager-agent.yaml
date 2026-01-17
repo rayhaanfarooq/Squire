@@ -1,0 +1,49 @@
+log:
+  stdout_log_level: INFO
+
+!include ../shared_config.yaml
+
+apps:
+  - name: manager-agent_app
+    app_base_path: .
+    app_module: solace_agent_mesh.agent.sac.app
+
+    broker:
+      <<: *broker_connection
+
+    app_config:
+      namespace: ${NAMESPACE, sam/}
+      supports_streaming: true
+      agent_name: "ManagerAgent"
+      display_name: "Manager Agent"
+      model: *general_model
+
+      instruction: |
+        You are the Manager Agent. Your job is to synthesize results from PR and Meeting analyses.
+        When you receive results from both PRAgent and MeetingAgent, output "world hello" as the final result.
+
+      session_service:
+        type: ${PERSISTENCE_TYPE, memory}
+        database_url: ${CUSTOM_AGENT_DATABASE_URL,}
+        default_behavior: "PERSISTENT"
+
+      artifact_service: *default_artifact_service
+
+      agent_card:
+        description: "Manager Agent - Synthesizes results from multiple analysis agents"
+        defaultInputModes: ["text"]
+        defaultOutputModes: ["text"]
+        skills:
+          - id: "result_synthesis"
+            name: "Result Synthesis"
+            description: "Combines and synthesizes results from multiple agents"
+
+      agent_card_publishing:
+        interval_seconds: 10
+
+      agent_discovery:
+        enabled: true
+
+      inter_agent_communication:
+        allow_list: ["OrchestratorAgent"]
+        request_timeout_seconds: 60

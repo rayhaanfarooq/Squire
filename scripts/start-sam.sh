@@ -112,24 +112,29 @@ if [ ! -f ".env" ]; then
 fi
 
 # Check for required configs
-if [ ! -f "configs/webui.yaml" ]; then
-  echo -e "${RED}❌ Required config file not found: configs/webui.yaml${NC}"
-  exit 1
-fi
-
 if [ ! -f "configs/orchestrator.yaml" ]; then
   echo -e "${RED}❌ Required config file not found: configs/orchestrator.yaml${NC}"
   exit 1
 fi
 
-# Build the command with configs
-CONFIGS="configs/webui.yaml configs/orchestrator.yaml"
+# Check if REST gateway config exists
+if [ ! -f "configs/gateways/rest.yaml" ]; then
+  echo -e "${YELLOW}⚠️  REST gateway config not found: configs/gateways/rest.yaml${NC}"
+  echo -e "${YELLOW}   REST Gateway will not be available${NC}"
+fi
 
-# Note: REST gateway (configs/gateways/rest.yaml) requires sam-rest-gateway plugin
-# which may not be installed. Commenting out for now.
-# If you need REST gateway, install it with: pip install sam-rest-gateway
-# if [ -f "configs/gateways/rest.yaml" ]; then
-#   CONFIGS="$CONFIGS configs/gateways/rest.yaml"
+# Build the command with configs
+CONFIGS="configs/orchestrator.yaml"
+
+# Include REST gateway (primary API gateway)
+if [ -f "configs/gateways/rest.yaml" ]; then
+  CONFIGS="$CONFIGS configs/gateways/rest.yaml"
+fi
+
+# Include WebUI gateway (optional, for web interface)
+# Uncomment if you want both REST API and WebUI
+# if [ -f "configs/webui.yaml" ]; then
+#   CONFIGS="$CONFIGS configs/webui.yaml"
 # fi
 
 # Check for agent configs and add them if they exist

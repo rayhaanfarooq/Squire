@@ -65,3 +65,4 @@ frontend/build/
 backend/data/*.db
 !backend/data/.gitkeep
 
+sam/.sam/
