@@ -2,7 +2,7 @@
  * API service module - placeholder for API calls
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8002'
 
 export const api = {
   /**
@@ -33,6 +33,15 @@ export const api = {
    */
   async healthCheck() {
     return this.request<{ status: string; service: string; version: string }>('/health')
+  },
+
+  /**
+   * Trigger SAM agents workflow
+   */
+  async triggerAgents() {
+    return this.request<{ success: boolean; result: string; raw_response?: any }>('/api/agents/trigger', {
+      method: 'POST',
+    })
   },
 }
 

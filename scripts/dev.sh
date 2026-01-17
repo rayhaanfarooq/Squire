@@ -68,8 +68,9 @@ fi
 echo -e "${GREEN}✅ Dependencies checked${NC}"
 echo ""
 echo -e "${BLUE}Starting servers:${NC}"
-echo -e "${GREEN}  Backend:  http://localhost:8000${NC}"
+echo -e "${GREEN}  Backend:  http://localhost:8002${NC}"
 echo -e "${GREEN}  Frontend: http://localhost:5173${NC}"
+echo -e "${GREEN}  SAM:      http://localhost:8000 (webui gateway + REST API)${NC}"
 echo ""
 
 # Start both servers using concurrently

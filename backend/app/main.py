@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
 from pathlib import Path
+from app.api import agents
 
 # Load environment variables
 load_dotenv()
@@ -16,6 +17,9 @@ app = FastAPI(
     description="Backend API for Squire hackathon project",
     version="0.1.0"
 )
+
+# Include routers
+app.include_router(agents.router)
 
 # CORS middleware for frontend development
 app.add_middleware(
@@ -57,5 +61,6 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    # Port 8002 to avoid conflict with SAM webui gateway on 8000
+    uvicorn.run(app, host="0.0.0.0", port=8002, reload=True)
 
