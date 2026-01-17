@@ -112,32 +112,38 @@ def synthesize_report(pr_analysis: dict, meeting_analysis: dict) -> dict:
     if not report["recommendations"]:
         report["recommendations"].append("All systems operational - no immediate concerns identified")
     
-    # Executive Summary
-    report["executive_summary"] = f"""
-EXECUTIVE SUMMARY
-=================
-
-Code Review Status:
-- PRs Analyzed: {pr_insights['total_prs']}
-- Files Changed: {pr_insights['total_files_changed']}
-- Net Code Changes: +{pr_insights['total_additions']} / -{pr_insights['total_deletions']} lines
-- High Complexity PRs: {pr_insights['high_complexity_count']}
-- High Risk PRs: {pr_insights['high_risk_count']}
-
-Meeting Activity Status:
-- Documents Analyzed: {meeting_insights['documents_analyzed']}
-- Action Items Identified: {meeting_insights['total_action_items']}
-- Decisions Documented: {meeting_insights['total_decisions']}
-- Attendees Tracked: {meeting_insights['total_attendees']}
-
-Key Recommendations:
-{chr(10).join(f"- {rec}" for rec in report['recommendations'])}
-
-Next Steps:
-- Review PR summaries for critical changes requiring attention
-- Follow up on meeting action items to ensure completion
-- Monitor high-risk PRs through deployment process
-"""
+    # Executive Summary - nice flowing paragraph
+    summary_parts = []
+    
+    # Code review status
+    summary_parts.append(f"Our recent analysis has reviewed {pr_insights['total_prs']} pull request{'s' if pr_insights['total_prs'] != 1 else ''} that collectively modified {pr_insights['total_files_changed']} files across the codebase.")
+    summary_parts.append(f"The code changes resulted in a net addition of {pr_insights['total_additions']} lines and removal of {pr_insights['total_deletions']} lines, indicating significant development activity.")
+    
+    if pr_insights['high_complexity_count'] > 0 or pr_insights['high_risk_count'] > 0:
+        risk_notice = []
+        if pr_insights['high_complexity_count'] > 0:
+            risk_notice.append(f"{pr_insights['high_complexity_count']} high-complexity PR{'s' if pr_insights['high_complexity_count'] != 1 else ''}")
+        if pr_insights['high_risk_count'] > 0:
+            risk_notice.append(f"{pr_insights['high_risk_count']} high-risk PR{'s' if pr_insights['high_risk_count'] != 1 else ''}")
+        summary_parts.append(f"Notably, {' and '.join(risk_notice)} {'were' if len(risk_notice) > 1 or pr_insights['high_complexity_count'] > 1 or pr_insights['high_risk_count'] > 1 else 'was'} identified, requiring additional attention during the review and deployment process.")
+    
+    # Meeting activity status
+    summary_parts.append(f"On the collaboration front, we analyzed {meeting_insights['documents_analyzed']} meeting document{'s' if meeting_insights['documents_analyzed'] != 1 else ''}, which captured {meeting_insights['total_action_items']} action items and {meeting_insights['total_decisions']} key decisions.")
+    if meeting_insights['total_attendees'] > 0:
+        summary_parts.append(f"The meetings involved {meeting_insights['total_attendees']} participant{'s' if meeting_insights['total_attendees'] != 1 else ''}, indicating strong team engagement.")
+    
+    # Recommendations
+    if report['recommendations']:
+        if len(report['recommendations']) == 1:
+            summary_parts.append(f"Based on this analysis, we recommend: {report['recommendations'][0]}.")
+        else:
+            recs_text = "; ".join(report['recommendations'][:3])  # Limit to first 3
+            summary_parts.append(f"Key recommendations include: {recs_text}.")
+    
+    # Next steps
+    summary_parts.append("Looking ahead, the team should prioritize reviewing PR summaries for critical changes, ensuring follow-up on identified action items, and monitoring high-risk PRs through their deployment lifecycle.")
+    
+    report["executive_summary"] = " ".join(summary_parts)
     
     return report
 

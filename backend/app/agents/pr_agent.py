@@ -103,44 +103,93 @@ class PRFetcher:
             reverse=True
         )[:5]
         
-        # Create summary
-        summary = f"PR #{pr.get('number')}: {pr.get('title')}\n"
-        summary += f"Author: {pr.get('user', {}).get('login')}\n"
-        summary += f"Status: {pr.get('state')}\n"
-        summary += f"Created: {pr.get('created_at')}\n"
-        summary += f"\nChanges:\n"
-        summary += f"  - Files changed: {files_changed}\n"
-        summary += f"  - Additions: +{total_additions}\n"
-        summary += f"  - Deletions: -{total_deletions}\n"
-        summary += f"  - Net change: {total_additions - total_deletions} lines\n"
+        # Create comprehensive paragraph summary
+        body = pr.get("body", "") or ""
+        author = pr.get('user', {}).get('login', 'Unknown')
+        pr_number = pr.get('number')
+        pr_title = pr.get('title', 'Untitled')
+        
+        # Build paragraph summary
+        summary_parts = []
+        summary_parts.append(f"This pull request (#{pr_number}) by {author} introduces significant changes to the codebase.")
+        summary_parts.append(f"The PR, titled '{pr_title}', modifies {files_changed} file{'s' if files_changed != 1 else ''} with {total_additions} additions and {total_deletions} deletions, resulting in a net change of {total_additions - total_deletions} lines of code.")
         
         if file_types:
-            summary += f"\nFile types: {', '.join(f'{k}({v})' for k, v in file_types.items())}\n"
+            primary_types = sorted(file_types.items(), key=lambda x: x[1], reverse=True)[:3]
+            type_list = ', '.join([f"{t[0]} ({t[1]} files)" for t in primary_types])
+            summary_parts.append(f"The changes primarily affect {type_list} files.")
         
-        # Key files
         if key_files:
-            summary += f"\nKey files modified:\n"
-            for f in key_files:
-                summary += f"  - {f.get('filename')} (+{f.get('additions', 0)}/-{f.get('deletions', 0)})\n"
+            top_files = [f.get('filename') for f in key_files[:3]]
+            summary_parts.append(f"Key files modified include {', '.join(top_files)}.")
         
-        # PR description excerpt
-        body = pr.get("body", "")
         if body:
-            summary += f"\nDescription: {body[:300]}...\n"
+            description_preview = body[:200].replace('\n', ' ').strip()
+            summary_parts.append(f"The PR description indicates: {description_preview}...")
         
-        # Create review assessment
+        summary = " ".join(summary_parts)
+        
+        # Create detailed breakdown for reference
+        details = f"\n\nDetailed Breakdown:\n"
+        details += f"PR #{pr_number}: {pr_title}\n"
+        details += f"Author: {author}\n"
+        details += f"Status: {pr.get('state')}\n"
+        details += f"Created: {pr.get('created_at')}\n"
+        details += f"Files changed: {files_changed} | Additions: +{total_additions} | Deletions: -{total_deletions}\n"
+        
+        # Create comprehensive quality assessment
+        total_changes = total_additions + total_deletions
+        complexity = "high" if total_changes > 500 else "medium" if total_changes > 100 else "low"
+        risk_level = "high" if files_changed > 20 else "medium" if files_changed > 5 else "low"
+        
+        quality_score = "excellent"
+        quality_factors = []
+        
+        # Assess quality based on various factors
+        if total_changes > 1000:
+            quality_score = "needs_review"
+            quality_factors.append("very large change set")
+        elif total_changes < 50:
+            quality_factors.append("focused change set")
+        
+        if files_changed > 15:
+            if quality_score == "excellent":
+                quality_score = "good"
+            quality_factors.append("multiple files affected")
+        elif files_changed <= 3:
+            quality_factors.append("targeted file modifications")
+        
+        if body and len(body) > 100:
+            quality_factors.append("detailed description provided")
+        elif not body or len(body) < 50:
+            if quality_score != "needs_review":
+                quality_score = "good"
+            quality_factors.append("description could be more detailed")
+        
+        quality_assessment = f"PR Quality Assessment: This pull request demonstrates {quality_score} quality. "
+        if quality_factors:
+            quality_assessment += "Key factors: " + ", ".join(quality_factors) + ". "
+        quality_assessment += f"The change complexity is {complexity} ({total_changes} total changes across {files_changed} files), and the risk level is {risk_level}."
+        
         review = {
-            "complexity": "high" if total_additions + total_deletions > 500 else "medium" if total_additions + total_deletions > 100 else "low",
-            "risk_level": "high" if files_changed > 20 else "medium" if files_changed > 5 else "low",
+            "complexity": complexity,
+            "risk_level": risk_level,
+            "quality_score": quality_score,
+            "quality_assessment": quality_assessment,
             "recommendations": []
         }
         
-        if total_additions + total_deletions > 1000:
-            review["recommendations"].append("Large PR - consider breaking into smaller changes")
+        if total_changes > 1000:
+            review["recommendations"].append("Large PR - consider breaking into smaller, focused changes for easier review")
         if files_changed > 15:
-            review["recommendations"].append("Many files changed - ensure thorough testing")
+            review["recommendations"].append("Many files changed - ensure thorough testing across all affected areas")
+        if not body or len(body) < 50:
+            review["recommendations"].append("PR description could be enhanced with more context about the changes")
         if not review["recommendations"]:
-            review["recommendations"].append("PR looks manageable")
+            review["recommendations"].append("PR is well-structured and ready for review")
+        
+        # Combine summary with quality assessment
+        full_summary = summary + " " + quality_assessment + details
         
         return {
             "pr_number": pr.get("number"),
@@ -157,7 +206,8 @@ class PRFetcher:
                 "net_change": total_additions - total_deletions,
                 "file_types": file_types
             },
-            "summary": summary,
+            "summary": full_summary,
+            "summary_paragraph": summary + " " + quality_assessment,  # Clean paragraph for display
             "review": review
         }
 

@@ -114,25 +114,47 @@ def analyze_meeting_minutes(content: str) -> Dict[str, Any]:
         if phrase.lower() in content_lower:
             topics.append(phrase)
     
-    # Create summary
-    summary = f"Meeting Minutes Analysis\n"
-    summary += f"Length: {len(content)} characters, {len(lines)} lines\n"
-    summary += f"\nKey Topics: {', '.join(topics[:5]) if topics else 'N/A'}\n"
+    # Create paragraph summary
+    summary_parts = []
     
-    if action_items:
-        summary += f"\nAction Items ({len(action_items)}):\n"
-        for i, item in enumerate(action_items[:10], 1):
-            summary += f"  {i}. {item[:100]}{'...' if len(item) > 100 else ''}\n"
+    summary_parts.append(f"This meeting document contains {len(lines)} lines of notes and covers several important topics.")
     
-    if decisions:
-        summary += f"\nDecisions ({len(decisions)}):\n"
-        for i, decision in enumerate(decisions[:10], 1):
-            summary += f"  {i}. {decision[:100]}{'...' if len(decision) > 100 else ''}\n"
+    if topics:
+        topics_list = ', '.join(topics[:5])
+        summary_parts.append(f"Key topics discussed include {topics_list}.")
     
     if attendees:
-        summary += f"\nAttendees: {', '.join(attendees[:10])}\n"
+        attendees_list = ', '.join(attendees[:5])
+        summary_parts.append(f"The meeting included {attendees_list} and other participants.")
     
-    summary += f"\nContent preview:\n{content[:500]}...\n"
+    if decisions:
+        summary_parts.append(f"The team made {len(decisions)} key decision{'s' if len(decisions) != 1 else ''}, including: {decisions[0][:150]}.")
+    
+    if action_items:
+        summary_parts.append(f"Moving forward, {len(action_items)} action item{'s' if len(action_items) != 1 else ''} {'were' if len(action_items) > 1 else 'was'} identified for follow-up.")
+    
+    if not action_items and not decisions:
+        summary_parts.append("The meeting focused on discussion and status updates.")
+    
+    summary_paragraph = " ".join(summary_parts)
+    
+    # Create detailed breakdown for reference
+    details = f"\n\nDetailed Breakdown:\n"
+    details += f"Document Length: {len(content)} characters, {len(lines)} lines\n"
+    if topics:
+        details += f"Key Topics: {', '.join(topics[:5])}\n"
+    if action_items:
+        details += f"\nAction Items ({len(action_items)}):\n"
+        for i, item in enumerate(action_items[:10], 1):
+            details += f"  {i}. {item[:100]}{'...' if len(item) > 100 else ''}\n"
+    if decisions:
+        details += f"\nDecisions ({len(decisions)}):\n"
+        for i, decision in enumerate(decisions[:10], 1):
+            details += f"  {i}. {decision[:100]}{'...' if len(decision) > 100 else ''}\n"
+    if attendees:
+        details += f"\nAttendees: {', '.join(attendees[:10])}\n"
+    
+    summary = summary_paragraph + details
     
     # Create review assessment
     review = {
@@ -160,6 +182,7 @@ def analyze_meeting_minutes(content: str) -> Dict[str, Any]:
         "attendees": attendees[:10],
         "topics": topics[:10],
         "summary": summary,
+        "summary_paragraph": summary_paragraph,  # Clean paragraph for display
         "review": review
     }
 
