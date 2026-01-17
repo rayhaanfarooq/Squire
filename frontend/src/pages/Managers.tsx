@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 
-const Interns = () => {
-  const internSurveyUrl = 'https://www.surveymonkey.com/r/96YP723';
+const Managers = () => {
+  const managerSurveyUrl = 'https://www.surveymonkey.com/r/96ZDST6';
 
   const [titleLoaded, setTitleLoaded] = useState(false);
   const [subtitleLoaded, setSubtitleLoaded] = useState(false);
@@ -90,7 +90,7 @@ const Interns = () => {
             }`}
             style={{ fontWeight: 900 }}
           >
-            Intern Performance Survey
+            Manager Performance Survey
           </h1>
           <p className={`text-2xl md:text-3xl text-blue-100 max-w-3xl mx-auto font-medium transition-all duration-1500 ease-in-out ${
             subtitleLoaded && titleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
@@ -230,7 +230,7 @@ const Interns = () => {
               Share Your Feedback
             </h2>
             <p className="text-xl text-slate-300">
-              Help us improve by completing the intern survey
+              Help us improve by completing the manager survey
             </p>
           </div>
 
@@ -241,10 +241,10 @@ const Interns = () => {
             >
               <div className="relative w-full" style={{ paddingBottom: '80%' }}>
                 <iframe
-                  src={internSurveyUrl}
+                  src={managerSurveyUrl}
                   className="absolute inset-0 w-full h-full border-0"
-                  title="Intern Survey"
-                  aria-label="Intern Performance Survey"
+                  title="Manager Survey"
+                  aria-label="Manager Performance Survey"
                 />
               </div>
               <p className="text-center text-slate-400 py-4 text-sm">
@@ -258,4 +258,4 @@ const Interns = () => {
   );
 };
 
-export default Interns;
+export default Managers;
