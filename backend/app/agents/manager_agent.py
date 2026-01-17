@@ -52,22 +52,23 @@ def synthesize_report(pr_analysis: dict, meeting_analysis: dict) -> dict:
         "detailed_meeting_summaries": []
     }
     
-    # PR Summary
+    # PR Summary - use new summary_paragraph and include patch_analysis
     if pr_results:
         report["detailed_pr_summaries"] = [
             {
                 "pr_number": a.get("pr_number"),
                 "title": a.get("title"),
                 "url": a.get("url"),
-                "summary": a.get("summary", "")[:300],
+                "summary": a.get("summary_paragraph") or a.get("summary", "")[:500],  # Use new summary_paragraph
                 "complexity": a.get("review", {}).get("complexity"),
                 "risk_level": a.get("review", {}).get("risk_level"),
-                "metrics": a.get("metrics", {})
+                "metrics": a.get("metrics", {}),
+                "patch_analysis": a.get("patch_analysis", {})  # Include patch analysis
             }
             for a in pr_results
         ]
     
-    # Meeting Summary
+    # Meeting Summary - use new summary_paragraph
     if meeting_results:
         report["detailed_meeting_summaries"] = [
             {
@@ -75,7 +76,7 @@ def synthesize_report(pr_analysis: dict, meeting_analysis: dict) -> dict:
                 "action_items": a.get("action_items", []),
                 "decisions": a.get("decisions", []),
                 "attendees": a.get("attendees", []),
-                "summary": a.get("summary", "")[:300]
+                "summary": a.get("summary_paragraph") or a.get("summary", "")[:500]  # Use new summary_paragraph
             }
             for a in meeting_results if a.get("status") == "completed"
         ]
@@ -112,12 +113,50 @@ def synthesize_report(pr_analysis: dict, meeting_analysis: dict) -> dict:
     if not report["recommendations"]:
         report["recommendations"].append("All systems operational - no immediate concerns identified")
     
-    # Executive Summary - nice flowing paragraph
+    # Executive Summary - incorporate PR and Meeting summaries
     summary_parts = []
     
-    # Code review status
+    # Extract PR summary paragraphs
+    pr_summaries = []
+    pr_patch_features = []
+    for pr_summary in report.get("detailed_pr_summaries", []):
+        summary_text = pr_summary.get("summary", "")
+        if summary_text:
+            pr_summaries.append(summary_text)
+        # Extract patch analysis features
+        patch_analysis = pr_summary.get("patch_analysis", {})
+        if patch_analysis.get("features_detected"):
+            pr_patch_features.extend(patch_analysis["features_detected"])
+    
+    # Extract Meeting summary paragraphs
+    meeting_summaries = []
+    for meeting_summary in report.get("detailed_meeting_summaries", []):
+        summary_text = meeting_summary.get("summary", "")
+        if summary_text:
+            meeting_summaries.append(summary_text)
+    
+    # Start with high-level overview
     summary_parts.append(f"Our recent analysis has reviewed {pr_insights['total_prs']} pull request{'s' if pr_insights['total_prs'] != 1 else ''} that collectively modified {pr_insights['total_files_changed']} files across the codebase.")
-    summary_parts.append(f"The code changes resulted in a net addition of {pr_insights['total_additions']} lines and removal of {pr_insights['total_deletions']} lines, indicating significant development activity.")
+    
+    # Incorporate PR summary with patch analysis
+    if pr_summaries:
+        # Use the first PR summary paragraph (includes patch analysis insights)
+        pr_summary_text = pr_summaries[0]
+        # Extract key parts of the summary
+        if "Code review reveals" in pr_summary_text or "patch analysis" in pr_summary_text.lower():
+            # Include patch analysis findings in executive summary
+            if pr_patch_features:
+                unique_features = list(set(pr_patch_features))[:3]
+                summary_parts.append(f"Code analysis reveals the implementation includes: {', '.join(unique_features)}.")
+        
+        # Add PR quality assessment
+        if pr_results:
+            quality_assessment = pr_results[0].get("review", {}).get("quality_assessment", "")
+            if quality_assessment:
+                # Extract just the quality assessment part
+                if "PR Quality Assessment:" in quality_assessment:
+                    quality_text = quality_assessment.split("PR Quality Assessment:")[1].strip()[:300]
+                    summary_parts.append(f"PR Quality: {quality_text}")
     
     if pr_insights['high_complexity_count'] > 0 or pr_insights['high_risk_count'] > 0:
         risk_notice = []
@@ -127,10 +166,20 @@ def synthesize_report(pr_analysis: dict, meeting_analysis: dict) -> dict:
             risk_notice.append(f"{pr_insights['high_risk_count']} high-risk PR{'s' if pr_insights['high_risk_count'] != 1 else ''}")
         summary_parts.append(f"Notably, {' and '.join(risk_notice)} {'were' if len(risk_notice) > 1 or pr_insights['high_complexity_count'] > 1 or pr_insights['high_risk_count'] > 1 else 'was'} identified, requiring additional attention during the review and deployment process.")
     
-    # Meeting activity status
-    summary_parts.append(f"On the collaboration front, we analyzed {meeting_insights['documents_analyzed']} meeting document{'s' if meeting_insights['documents_analyzed'] != 1 else ''}, which captured {meeting_insights['total_action_items']} action items and {meeting_insights['total_decisions']} key decisions.")
-    if meeting_insights['total_attendees'] > 0:
-        summary_parts.append(f"The meetings involved {meeting_insights['total_attendees']} participant{'s' if meeting_insights['total_attendees'] != 1 else ''}, indicating strong team engagement.")
+    # Incorporate Meeting summary
+    if meeting_summaries:
+        # Use the first meeting summary paragraph
+        meeting_summary_text = meeting_summaries[0]
+        # Extract key accomplishments/activities
+        if "During the meeting" in meeting_summary_text or "The team" in meeting_summary_text:
+            # Get a relevant excerpt from the meeting summary
+            meeting_excerpt = meeting_summary_text[:250] if len(meeting_summary_text) > 250 else meeting_summary_text
+            summary_parts.append(f"Meeting Activity: {meeting_excerpt}.")
+    else:
+        # Fallback to basic meeting info
+        summary_parts.append(f"On the collaboration front, we analyzed {meeting_insights['documents_analyzed']} meeting document{'s' if meeting_insights['documents_analyzed'] != 1 else ''}, which captured {meeting_insights['total_action_items']} action items and {meeting_insights['total_decisions']} key decisions.")
+        if meeting_insights['total_attendees'] > 0:
+            summary_parts.append(f"The meetings involved {meeting_insights['total_attendees']} participant{'s' if meeting_insights['total_attendees'] != 1 else ''}, indicating strong team engagement.")
     
     # Recommendations
     if report['recommendations']:

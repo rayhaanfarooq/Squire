@@ -114,7 +114,43 @@ def analyze_meeting_minutes(content: str) -> Dict[str, Any]:
         if phrase.lower() in content_lower:
             topics.append(phrase)
     
-    # Create paragraph summary
+    # Analyze what the team actually did in the meeting
+    activities = []
+    accomplishments = []
+    
+    # Look for what was accomplished/completed
+    accomplishment_patterns = [
+        r'completed[:\-]?\s*(.+?)(?:\n|$)',
+        r'finished[:\-]?\s*(.+?)(?:\n|$)',
+        r'accomplished[:\-]?\s*(.+?)(?:\n|$)',
+        r'delivered[:\-]?\s*(.+?)(?:\n|$)',
+        r'solved[:\-]?\s*(.+?)(?:\n|$)',
+    ]
+    
+    for pattern in accomplishment_patterns:
+        matches = re.finditer(pattern, content_lower, re.IGNORECASE | re.MULTILINE)
+        for match in matches:
+            accomplishment = match.group(1).strip()
+            if accomplishment and len(accomplishment) > 3:
+                accomplishments.append(accomplishment)
+    
+    # Look for activities/work done
+    activity_patterns = [
+        r'discussed[:\-]?\s*(.+?)(?:\n|$)',
+        r'reviewed[:\-]?\s*(.+?)(?:\n|$)',
+        r'presented[:\-]?\s*(.+?)(?:\n|$)',
+        r'demonstrated[:\-]?\s*(.+?)(?:\n|$)',
+        r'worked on[:\-]?\s*(.+?)(?:\n|$)',
+    ]
+    
+    for pattern in activity_patterns:
+        matches = re.finditer(pattern, content_lower, re.IGNORECASE | re.MULTILINE)
+        for match in matches:
+            activity = match.group(1).strip()
+            if activity and len(activity) > 3:
+                activities.append(activity)
+    
+    # Create comprehensive paragraph summary
     summary_parts = []
     
     summary_parts.append(f"This meeting document contains {len(lines)} lines of notes and covers several important topics.")
@@ -127,13 +163,31 @@ def analyze_meeting_minutes(content: str) -> Dict[str, Any]:
         attendees_list = ', '.join(attendees[:5])
         summary_parts.append(f"The meeting included {attendees_list} and other participants.")
     
+    # What the team did/accomplished
+    if accomplishments:
+        if len(accomplishments) == 1:
+            summary_parts.append(f"During the meeting, the team completed: {accomplishments[0][:200]}.")
+        else:
+            accomplishments_text = ', '.join([a[:100] for a in accomplishments[:2]])
+            summary_parts.append(f"The team accomplished several tasks including: {accomplishments_text}.")
+    
+    if activities:
+        activities_text = ', '.join([a[:100] for a in activities[:2]])
+        summary_parts.append(f"The team also discussed and reviewed: {activities_text}.")
+    
     if decisions:
-        summary_parts.append(f"The team made {len(decisions)} key decision{'s' if len(decisions) != 1 else ''}, including: {decisions[0][:150]}.")
+        if len(decisions) == 1:
+            summary_parts.append(f"The team made a key decision: {decisions[0][:200]}.")
+        else:
+            summary_parts.append(f"The team made {len(decisions)} key decisions, including: {decisions[0][:150]}.")
     
     if action_items:
-        summary_parts.append(f"Moving forward, {len(action_items)} action item{'s' if len(action_items) != 1 else ''} {'were' if len(action_items) > 1 else 'was'} identified for follow-up.")
+        if len(action_items) == 1:
+            summary_parts.append(f"Moving forward, one action item was identified: {action_items[0][:200]}.")
+        else:
+            summary_parts.append(f"Moving forward, {len(action_items)} action items were identified for follow-up, including: {action_items[0][:150]}.")
     
-    if not action_items and not decisions:
+    if not action_items and not decisions and not accomplishments:
         summary_parts.append("The meeting focused on discussion and status updates.")
     
     summary_paragraph = " ".join(summary_parts)

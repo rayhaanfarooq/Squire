@@ -312,6 +312,102 @@ function Dashboard() {
                 </div>
               )}
 
+              {/* Detailed PR Summaries */}
+              {report.report?.report?.detailed_pr_summaries && report.report.report.detailed_pr_summaries.length > 0 && (
+                <div className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-800 rounded-xl shadow-sm">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <h3 className="text-lg font-bold text-green-900 dark:text-green-100">
+                      PR Analysis Details
+                    </h3>
+                  </div>
+                  <div className="space-y-4">
+                    {report.report.report.detailed_pr_summaries.map((prSummary, idx) => (
+                      <div key={idx} className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-green-200 dark:border-green-700">
+                        <div className="flex items-center justify-between mb-2">
+                          <a 
+                            href={prSummary.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-sm font-semibold text-green-700 dark:text-green-300 hover:underline"
+                          >
+                            PR #{prSummary.pr_number}: {prSummary.title}
+                          </a>
+                          <div className="flex space-x-2">
+                            <span className={`text-xs px-2 py-1 rounded ${prSummary.complexity === 'high' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : prSummary.complexity === 'medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'}`}>
+                              {prSummary.complexity} complexity
+                            </span>
+                            <span className={`text-xs px-2 py-1 rounded ${prSummary.risk_level === 'high' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : prSummary.risk_level === 'medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'}`}>
+                              {prSummary.risk_level} risk
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-sm text-green-800 dark:text-green-200 leading-relaxed">
+                          {prSummary.summary}
+                        </p>
+                        {prSummary.patch_analysis && prSummary.patch_analysis.features_detected && prSummary.patch_analysis.features_detected.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-700">
+                            <p className="text-xs font-semibold text-green-700 dark:text-green-300 mb-1">Features Detected:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {prSummary.patch_analysis.features_detected.map((feature, fIdx) => (
+                                <span key={fIdx} className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded">
+                                  {feature}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Detailed Meeting Summaries */}
+              {report.report?.report?.detailed_meeting_summaries && report.report.report.detailed_meeting_summaries.length > 0 && (
+                <div className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-2 border-purple-200 dark:border-purple-800 rounded-xl shadow-sm">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <h3 className="text-lg font-bold text-purple-900 dark:text-purple-100">
+                      Meeting Analysis Details
+                    </h3>
+                  </div>
+                  <div className="space-y-4">
+                    {report.report.report.detailed_meeting_summaries.map((meetingSummary, idx) => (
+                      <div key={idx} className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
+                        <div className="mb-2">
+                          <a 
+                            href={meetingSummary.doc_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-sm font-semibold text-purple-700 dark:text-purple-300 hover:underline"
+                          >
+                            Meeting Document
+                          </a>
+                        </div>
+                        <p className="text-sm text-purple-800 dark:text-purple-200 leading-relaxed mb-3">
+                          {meetingSummary.summary}
+                        </p>
+                        {meetingSummary.action_items && meetingSummary.action_items.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-purple-200 dark:border-purple-700">
+                            <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-1">Action Items:</p>
+                            <ul className="list-disc list-inside text-xs text-purple-800 dark:text-purple-200 space-y-1">
+                              {meetingSummary.action_items.slice(0, 5).map((item, aIdx) => (
+                                <li key={aIdx}>{item}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Show raw report if structure is unexpected */}
               {!report.report?.report && (
                 <div className="p-6 bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl">

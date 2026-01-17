@@ -55,6 +55,106 @@ class PRFetcher:
             
             return merged_prs[:limit]
     
+    def analyze_patches(self, files: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Analyze actual patch/diff content to understand what features/changes were made"""
+        features_detected = []
+        change_patterns = []
+        code_quality_notes = []
+        files_with_patches = 0
+        total_patch_lines = 0
+        
+        for file_info in files:
+            patch = file_info.get("patch", "")
+            if not patch:
+                continue  # Binary files or very large files may not have patch
+            
+            files_with_patches += 1
+            filename = file_info.get("filename", "")
+            patch_lower = patch.lower()
+            
+            # Count actual changed lines in patch
+            patch_lines = [line for line in patch.split('\n') 
+                          if line.startswith('+') or line.startswith('-')]
+            added_code_lines = [line for line in patch_lines 
+                               if line.startswith('+') and not line.startswith('+++')]
+            removed_code_lines = [line for line in patch_lines 
+                                 if line.startswith('-') and not line.startswith('---')]
+            total_patch_lines += len(added_code_lines) + len(removed_code_lines)
+            
+            # Detect common features and patterns
+            # Async/await functionality
+            if ("async def" in patch or "await " in patch) and "async" not in [f.lower() for f in features_detected]:
+                features_detected.append("async/await functionality")
+            
+            # Testing additions
+            if ("def test_" in patch or "pytest" in patch_lower or "unittest" in patch_lower) and "test" not in [f.lower() for f in features_detected]:
+                features_detected.append("test additions")
+            
+            # New classes
+            if "class " in patch and ("def __init__" in patch or "class " in added_code_lines):
+                if "new classes" not in [f.lower() for f in features_detected]:
+                    features_detected.append("new class definitions")
+            
+            # API endpoints (FastAPI, Flask, Django routes)
+            if ("@app." in patch or "@router." in patch or "@api." in patch or 
+                "def get_" in patch or "def post_" in patch or "def put_" in patch):
+                if "API endpoints" not in features_detected:
+                    features_detected.append("API endpoints")
+            
+            # Database/SQL changes
+            if ("CREATE TABLE" in patch or "INSERT INTO" in patch or "ALTER TABLE" in patch or
+                "db." in patch_lower or "sqlalchemy" in patch_lower):
+                if "database changes" not in change_patterns:
+                    change_patterns.append("database schema modifications")
+            
+            # Import statements (new dependencies)
+            added_imports = [line for line in added_code_lines if line.startswith('+import ') or line.startswith('+from ')]
+            if added_imports and "dependencies" not in [c.lower() for c in change_patterns]:
+                change_patterns.append("dependency additions")
+            
+            # Error handling improvements
+            if "try:" in patch and "except" in patch:
+                if "error handling" not in [c.lower() for c in change_patterns]:
+                    change_patterns.append("error handling improvements")
+            
+            # Refactoring (many deletions and additions in same areas)
+            additions = file_info.get("additions", 0)
+            deletions = file_info.get("deletions", 0)
+            if additions > 10 and deletions > 10:
+                if "refactoring" not in [c.lower() for c in change_patterns]:
+                    change_patterns.append("code refactoring")
+            
+            # Function modifications
+            added_functions = [line for line in added_code_lines if line.startswith('+def ') or line.startswith('+    def ')]
+            removed_functions = [line for line in removed_code_lines if line.startswith('-def ') or line.startswith('-    def ')]
+            if (added_functions or removed_functions) and "function modifications" not in [c.lower() for c in change_patterns]:
+                change_patterns.append("function modifications")
+            
+            # Type hints (Python)
+            if ":" in patch and "->" in patch and "type hints" not in [c.lower() for c in change_patterns]:
+                change_patterns.append("type hint additions")
+            
+            # Configuration changes
+            if ("config" in filename.lower() or "settings" in filename.lower() or 
+                "ENV" in patch or "environment" in patch_lower):
+                if "configuration" not in [c.lower() for c in change_patterns]:
+                    change_patterns.append("configuration changes")
+            
+            # Code quality issues
+            if "TODO" in patch or "FIXME" in patch:
+                code_quality_notes.append(f"TODOs/FIXMEs found in {filename}")
+            
+            if "print(" in added_code_lines and "logging" not in patch_lower:
+                code_quality_notes.append(f"Potential debug print statements in {filename}")
+        
+        return {
+            "features_detected": features_detected,
+            "change_patterns": change_patterns,
+            "code_quality_notes": code_quality_notes,
+            "files_with_patches": files_with_patches,
+            "total_patch_lines_analyzed": total_patch_lines
+        }
+
     async def fetch_pr_details(self, owner: str, repo: str, pr_number: int) -> Dict[str, Any]:
         """Fetch detailed PR information including files and reviews"""
         async with httpx.AsyncClient(timeout=30.0) as client:
@@ -103,6 +203,9 @@ class PRFetcher:
             reverse=True
         )[:5]
         
+        # Analyze actual patch/diff content to understand code changes
+        patch_analysis = self.analyze_patches(files)
+        
         # Create comprehensive paragraph summary
         body = pr.get("body", "") or ""
         author = pr.get('user', {}).get('login', 'Unknown')
@@ -122,6 +225,15 @@ class PRFetcher:
         if key_files:
             top_files = [f.get('filename') for f in key_files[:3]]
             summary_parts.append(f"Key files modified include {', '.join(top_files)}.")
+        
+        # Add patch analysis insights about actual code changes
+        if patch_analysis.get("features_detected"):
+            features = ', '.join(patch_analysis['features_detected'][:3])
+            summary_parts.append(f"Code review reveals the implementation includes: {features}.")
+        
+        if patch_analysis.get("change_patterns"):
+            patterns = ', '.join(patch_analysis['change_patterns'][:2])
+            summary_parts.append(f"The changes demonstrate {patterns}.")
         
         if body:
             description_preview = body[:200].replace('\n', ' ').strip()
@@ -208,7 +320,8 @@ class PRFetcher:
             },
             "summary": full_summary,
             "summary_paragraph": summary + " " + quality_assessment,  # Clean paragraph for display
-            "review": review
+            "review": review,
+            "patch_analysis": patch_analysis  # NEW: Patch analysis with actual code changes
         }
 
 
