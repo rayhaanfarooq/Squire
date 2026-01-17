@@ -65,4 +65,7 @@ frontend/build/
 backend/data/*.db
 !backend/data/.gitkeep
 
+# Stub message queue (file-based broker for cross-process communication)
+.stub_queue/
+
 sam/.sam/

@@ -4,11 +4,11 @@
 # Checks for dependencies and installs if needed
 #
 # Virtual Environment:
-# - Always uses a virtual environment in backend/venv or backend/env
-# - Never uses system Python to ensure isolation
-# - Creates venv if it doesn't exist
+# - Uses root venv (../venv from this script's location)
+# - Falls back to backend/venv if root venv doesn't exist
+# - Creates venv if needed
 
-cd "$(dirname "$0")/../backend" || exit 1
+cd "$(dirname "$0")/.." || exit 1
 
 # Function to find the best Python executable
 find_best_python() {
@@ -62,72 +62,70 @@ find_python_with_packages() {
   return 1
 }
 
-# Always use a virtual environment in the backend directory
-# Check if virtual environment exists and is valid
+# Check if root virtual environment exists and is valid
 if [ -d "venv" ] && [ -f "venv/bin/activate" ]; then
   source venv/bin/activate
   if python -c "import fastapi, uvicorn" 2>/dev/null; then
-    echo "🐍 Using existing backend virtual environment (backend/venv)..."
+    echo "🐍 Using root virtual environment..."
     PYTHON_CMD="python"
   else
-    # Venv exists but doesn't have packages, remove it
-    echo "🐍 Removing invalid virtual environment..."
-    rm -rf venv
-    PYTHON_CMD=""
+    # Venv exists but doesn't have packages
+    echo "⚠️  Root venv exists but packages missing. Installing..."
+    pip install --upgrade pip --quiet
+    # Check if requirements.txt is in root or backend
+    if [ -f "requirements.txt" ]; then
+      pip install -r requirements.txt
+    elif [ -f "backend/requirements.txt" ]; then
+      pip install -r backend/requirements.txt
+    else
+      echo "❌ Error: requirements.txt not found!"
+      exit 1
+    fi
+    PYTHON_CMD="python"
   fi
-elif [ -d "env" ] && [ -f "env/bin/activate" ]; then
-  source env/bin/activate
+elif [ -d "backend/venv" ] && [ -f "backend/venv/bin/activate" ]; then
+  # Fallback to backend/venv if root venv doesn't exist
+  source backend/venv/bin/activate
   if python -c "import fastapi, uvicorn" 2>/dev/null; then
-    echo "🐍 Using existing backend virtual environment (backend/env)..."
+    echo "🐍 Using backend virtual environment (backend/venv)..."
     PYTHON_CMD="python"
   else
-    # Venv exists but doesn't have packages, remove it
-    echo "🐍 Removing invalid virtual environment..."
-    rm -rf env
-    PYTHON_CMD=""
+    echo "⚠️  Backend venv exists but packages missing. Installing..."
+    pip install --upgrade pip --quiet
+    # Check if requirements.txt is in root or backend
+    if [ -f "requirements.txt" ]; then
+      pip install -r requirements.txt
+    elif [ -f "backend/requirements.txt" ]; then
+      pip install -r backend/requirements.txt
+    else
+      echo "❌ Error: requirements.txt not found!"
+      exit 1
+    fi
+    PYTHON_CMD="python"
   fi
 else
-  PYTHON_CMD=""
-fi
-
-# If no valid venv, create one (always use venv, never system Python)
-if [ -z "$PYTHON_CMD" ]; then
-  echo "📦 Creating backend virtual environment..."
+  # No venv found, try to find Python with packages installed
+  PYTHON_CMD=$(find_python_with_packages)
   
-  # Find best Python to use for venv
-  VENV_PYTHON=$(find_best_python)
-  
-  if [ -z "$VENV_PYTHON" ]; then
-    echo "❌ Error: No Python interpreter found!"
+  if [ -z "$PYTHON_CMD" ]; then
+    echo "❌ Error: No Python with packages found!"
+    echo "   Please run: python3.12 -m venv venv && source venv/bin/activate && pip install -r requirements.txt"
     exit 1
   fi
   
-  # Try to use python3.12 for venv if available (more compatible)
-  if command -v python3.12 &> /dev/null; then
-    echo "🐍 Creating backend venv with python3.12..."
-    python3.12 -m venv venv
-  else
-    echo "🐍 Creating backend venv with $VENV_PYTHON..."
-    "$VENV_PYTHON" -m venv venv
-  fi
-  
-  source venv/bin/activate
-  PYTHON_CMD="python"
-  
-  echo "📦 Installing backend Python dependencies..."
-  pip install --upgrade pip --quiet
-  pip install -r requirements.txt
+  echo "🐍 Using system Python with packages installed: $PYTHON_CMD"
 fi
 
 # Verify packages are available
 if ! "$PYTHON_CMD" -c "import fastapi, uvicorn" 2>/dev/null; then
   echo "❌ Error: Required packages (fastapi, uvicorn) are not installed!"
-  echo "   Try running: pip install -r requirements.txt"
+  echo "   Try running: source venv/bin/activate && pip install -r requirements.txt"
   exit 1
 fi
 
-# Run uvicorn using the selected Python
+# Run uvicorn using the selected Python (from backend directory)
 # Port 8002 to avoid conflict with SAM webui gateway on 8000
 echo "🚀 Starting FastAPI backend on http://localhost:8002"
+cd backend
 "$PYTHON_CMD" -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8002
 

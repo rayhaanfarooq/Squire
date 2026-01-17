@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
 from pathlib import Path
-from app.api import agents
+from app.api import agents, analysis
 
 # Load environment variables
 load_dotenv()
@@ -20,6 +20,7 @@ app = FastAPI(
 
 # Include routers
 app.include_router(agents.router)
+app.include_router(analysis.router)
 
 # CORS middleware for frontend development
 app.add_middleware(

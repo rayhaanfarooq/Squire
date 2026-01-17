@@ -4,10 +4,10 @@
   "description": "Squire hackathon project scaffolding",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:sam\"",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:agents\"",
     "dev:backend": "./scripts/start-backend.sh",
     "dev:frontend": "cd frontend && npm run dev",
-    "dev:sam": "./scripts/start-sam.sh"
+    "dev:agents": "./scripts/start-analysis-agents.sh"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

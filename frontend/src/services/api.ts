@@ -43,5 +43,26 @@ export const api = {
       method: 'POST',
     })
   },
+
+  /**
+   * Start analysis workflow (PR Agent + Meeting Agent → Join → Manager Agent)
+   */
+  async startAnalysis(prCount: number = 3) {
+    return this.request<{ status: string; message: string }>('/api/analysis/start', {
+      method: 'POST',
+      body: JSON.stringify({ pr_count: prCount }),
+    })
+  },
+
+  /**
+   * Get latest Manager Agent report
+   */
+  async getManagerReport() {
+    return this.request<{
+      report: any;
+      timestamp: string;
+      status: string;
+    }>('/api/analysis/report')
+  },
 }
 
