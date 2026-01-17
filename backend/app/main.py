@@ -36,8 +36,9 @@ app.add_middleware(
 DB_PATH = Path(__file__).parent.parent / "data" / "squire.db"
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-# Initialize database connection (placeholder for future ORM setup)
-# SQLite database will be created automatically on first access
+# Initialize database connection and create tables
+from app.db.database import init_db
+init_db()
 
 
 @app.get("/health")

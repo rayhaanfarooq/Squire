@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Script to start all analysis agents (PR, Meeting, Join, Manager)
-# Runs PR Agent, Meeting Agent, Join Agent, and Manager Agent
+# Script to start all analysis agents (PR, Meeting, Team, Join, Manager)
+# Runs PR Agent, Meeting Agent, Team Agent, Join Agent, and Manager Agent
 
 cd "$(dirname "$0")/.." || exit 1
 
@@ -25,6 +25,9 @@ PR_AGENT_PID=$!
 $PYTHON_CMD -m app.agents.meeting_agent &
 MEETING_AGENT_PID=$!
 
+$PYTHON_CMD -m app.agents.team_agent &
+TEAM_AGENT_PID=$!
+
 $PYTHON_CMD -m app.agents.join_agent &
 JOIN_AGENT_PID=$!
 
@@ -34,10 +37,11 @@ MANAGER_AGENT_PID=$!
 echo "✅ All analysis agents started:"
 echo "   PR Agent: PID $PR_AGENT_PID"
 echo "   Meeting Agent: PID $MEETING_AGENT_PID"
+echo "   Team Agent: PID $TEAM_AGENT_PID"
 echo "   Join Agent: PID $JOIN_AGENT_PID"
 echo "   Manager Agent: PID $MANAGER_AGENT_PID"
 echo ""
-echo "Workflow: PR Agent + Meeting Agent → Join Agent → Manager Agent"
+echo "Workflow: PR Agent + Meeting Agent + Team Agent → Join Agent → Manager Agent"
 echo "Trigger via: POST /api/analysis/start"
 
 # Wait for all agents

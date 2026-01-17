@@ -150,45 +150,111 @@ def analyze_meeting_minutes(content: str) -> Dict[str, Any]:
             if activity and len(activity) > 3:
                 activities.append(activity)
     
-    # Create comprehensive paragraph summary
+    # Extract more specific details
+    # Extract project/module names
+    projects = re.findall(r'(?:project|module|feature|component)\s+(?:called\s+)?["\']?([A-Z][a-zA-Z0-9\s]+)["\']?', content, re.IGNORECASE)
+    
+    # Extract deadlines/timelines
+    deadlines = re.findall(r'(?:deadline|due\s+date|by|target|ETA|timeline)[:\-]?\s*([^.]+?)(?:\.|$)', content, re.IGNORECASE)
+    
+    # Extract specific problems/issues
+    problems = []
+    problem_patterns = [
+        r'(?:problem|issue|blocker|challenge|difficulty)\s+(?:is|with|that)\s+([^.]+?)(?:\.|$)',
+        r'(?:facing|encountering|experiencing)\s+([^.]+?)(?:\.|$)',
+    ]
+    for pattern in problem_patterns:
+        matches = re.finditer(pattern, content, re.IGNORECASE)
+        for match in matches:
+            problem = match.group(1).strip()[:150]
+            if problem and len(problem) > 10:
+                problems.append(problem)
+    
+    # Extract solutions/approaches
+    solutions = []
+    solution_patterns = [
+        r'(?:solution|approach|fix|resolve|address)\s+(?:is|was|will be|to)\s+([^.]+?)(?:\.|$)',
+        r'(?:decided\s+to|agreed\s+to|plan\s+to)\s+([^.]+?)(?:\.|$)',
+    ]
+    for pattern in solution_patterns:
+        matches = re.finditer(pattern, content, re.IGNORECASE)
+        for match in matches:
+            solution = match.group(1).strip()[:150]
+            if solution and len(solution) > 10:
+                solutions.append(solution)
+    
+    # Extract metrics/numbers
+    metrics = re.findall(r'(\d+\s*(?:percent|%|hours|days|weeks|people|members|items|tasks|PRs|issues))', content, re.IGNORECASE)
+    
+    # Create comprehensive, detailed paragraph summary
     summary_parts = []
     
-    summary_parts.append(f"This meeting document contains {len(lines)} lines of notes and covers several important topics.")
-    
-    if topics:
-        topics_list = ', '.join(topics[:5])
-        summary_parts.append(f"Key topics discussed include {topics_list}.")
+    # Opening with context and scope
+    summary_parts.append(f"This meeting document contains {len(lines)} lines of detailed notes covering comprehensive team discussion and decision-making.")
     
     if attendees:
-        attendees_list = ', '.join(attendees[:5])
-        summary_parts.append(f"The meeting included {attendees_list} and other participants.")
+        attendees_list = ', '.join(attendees[:4])
+        summary_parts.append(f"The meeting involved {attendees_list}{' and others' if len(attendees) > 4 else ''}, representing key stakeholders and team members.")
     
-    # What the team did/accomplished
+    # Specific topics with context
+    if topics:
+        topics_list = ', '.join(topics[:5])
+        summary_parts.append(f"Discussion centered on {topics_list}, indicating a focused agenda addressing multiple aspects of project development.")
+    
+    # Project/module specifics
+    if projects:
+        projects_list = ', '.join(projects[:3])
+        summary_parts.append(f"Specific focus was given to {projects_list}, demonstrating targeted attention to key deliverables.")
+    
+    # Accomplishments with details
     if accomplishments:
         if len(accomplishments) == 1:
-            summary_parts.append(f"During the meeting, the team completed: {accomplishments[0][:200]}.")
+            summary_parts.append(f"A significant accomplishment was achieved during the meeting: {accomplishments[0][:250]}.")
         else:
-            accomplishments_text = ', '.join([a[:100] for a in accomplishments[:2]])
-            summary_parts.append(f"The team accomplished several tasks including: {accomplishments_text}.")
+            accomplishments_text = '; '.join([a[:120] for a in accomplishments[:2]])
+            summary_parts.append(f"The team documented several accomplishments including: {accomplishments_text}.")
     
+    # Activities with specifics
     if activities:
-        activities_text = ', '.join([a[:100] for a in activities[:2]])
-        summary_parts.append(f"The team also discussed and reviewed: {activities_text}.")
+        activities_text = '; '.join([a[:120] for a in activities[:2]])
+        summary_parts.append(f"Detailed review and discussion occurred on: {activities_text}, ensuring thorough examination of key work items.")
     
+    # Problems and solutions
+    if problems:
+        if len(problems) == 1:
+            summary_parts.append(f"A specific problem was identified: {problems[0][:200]}.")
+        elif solutions:
+            summary_parts.append(f"Several challenges were discussed, including {problems[0][:150]}, with corresponding solutions being evaluated.")
+    
+    if solutions:
+        solutions_text = '; '.join([s[:120] for s in solutions[:2]])
+        summary_parts.append(f"The team agreed on solutions and approaches: {solutions_text}.")
+    
+    # Decisions with impact
     if decisions:
         if len(decisions) == 1:
-            summary_parts.append(f"The team made a key decision: {decisions[0][:200]}.")
+            summary_parts.append(f"A critical decision was made: {decisions[0][:250]}, which will guide future development efforts.")
         else:
-            summary_parts.append(f"The team made {len(decisions)} key decisions, including: {decisions[0][:150]}.")
+            summary_parts.append(f"The meeting resulted in {len(decisions)} key decisions, with the primary decision being: {decisions[0][:200]}, establishing direction for the team.")
     
+    # Action items with specifics
     if action_items:
         if len(action_items) == 1:
-            summary_parts.append(f"Moving forward, one action item was identified: {action_items[0][:200]}.")
+            summary_parts.append(f"One concrete action item was established: {action_items[0][:250]}, ensuring clear next steps.")
         else:
-            summary_parts.append(f"Moving forward, {len(action_items)} action items were identified for follow-up, including: {action_items[0][:150]}.")
+            summary_parts.append(f"Moving forward, {len(action_items)} specific action items were defined, with priority given to: {action_items[0][:200]}, demonstrating a structured approach to follow-up.")
+    
+    # Metrics and deadlines
+    if metrics:
+        metrics_text = ', '.join(metrics[:3])
+        summary_parts.append(f"Quantifiable metrics and timelines were established: {metrics_text}, providing measurable targets.")
+    
+    if deadlines:
+        deadlines_text = '; '.join([d[:100] for d in deadlines[:2]])
+        summary_parts.append(f"Specific timelines were discussed: {deadlines_text}, ensuring alignment on delivery expectations.")
     
     if not action_items and not decisions and not accomplishments:
-        summary_parts.append("The meeting focused on discussion and status updates.")
+        summary_parts.append("The meeting primarily focused on detailed discussion, status updates, and collaborative problem-solving.")
     
     summary_paragraph = " ".join(summary_parts)
     
@@ -235,6 +301,11 @@ def analyze_meeting_minutes(content: str) -> Dict[str, Any]:
         "decisions": decisions[:10],
         "attendees": attendees[:10],
         "topics": topics[:10],
+        "projects": projects[:5],
+        "problems": problems[:5],
+        "solutions": solutions[:5],
+        "deadlines": deadlines[:5],
+        "metrics": metrics[:5],
         "summary": summary,
         "summary_paragraph": summary_paragraph,  # Clean paragraph for display
         "review": review

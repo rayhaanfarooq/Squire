@@ -179,7 +179,7 @@ function Dashboard() {
               )}
 
               {/* Insights Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* PR Insights */}
                 {report.report?.report?.pr_insights && (
                   <div className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-800 rounded-xl shadow-sm">
@@ -257,6 +257,42 @@ function Dashboard() {
                           <span className="text-sm text-purple-700 dark:text-purple-300">Attendees:</span>
                           <span className="font-bold text-lg text-purple-900 dark:text-purple-100">{report.report.report.meeting_insights.total_attendees || 0}</span>
                         </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Team Insights */}
+                {report.report?.report?.team_insights && (
+                  <div className="p-6 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 border-2 border-indigo-200 dark:border-indigo-800 rounded-xl shadow-sm">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      <h3 className="text-lg font-bold text-indigo-900 dark:text-indigo-100">
+                        Team Insights
+                      </h3>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-indigo-700 dark:text-indigo-300">Reviews Analyzed:</span>
+                        <span className="font-bold text-lg text-indigo-900 dark:text-indigo-100">{report.report.report.team_insights.reviews_analyzed || 0}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-indigo-700 dark:text-indigo-300">Sentiment:</span>
+                        <span className={`font-bold text-lg ${
+                          report.report.report.team_insights.overall_sentiment === 'positive'
+                            ? 'text-green-600 dark:text-green-400'
+                            : report.report.report.team_insights.overall_sentiment === 'negative'
+                            ? 'text-red-600 dark:text-red-400'
+                            : 'text-gray-600 dark:text-gray-400'
+                        }`}>
+                          {report.report.report.team_insights.overall_sentiment || 'neutral'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-indigo-700 dark:text-indigo-300">Topics:</span>
+                        <span className="font-bold text-lg text-indigo-900 dark:text-indigo-100">{report.report.report.team_insights.topics_identified || 0}</span>
                       </div>
                     </div>
                   </div>
@@ -400,6 +436,62 @@ function Dashboard() {
                                 <li key={aIdx}>{item}</li>
                               ))}
                             </ul>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Detailed Team Summaries */}
+              {report.report?.report?.detailed_team_summaries && report.report.report.detailed_team_summaries.length > 0 && (
+                <div className="p-6 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 border-2 border-indigo-200 dark:border-indigo-800 rounded-xl shadow-sm">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <h3 className="text-lg font-bold text-indigo-900 dark:text-indigo-100">
+                      Team Feedback Analysis
+                    </h3>
+                  </div>
+                  <div className="space-y-4">
+                    {report.report.report.detailed_team_summaries.map((teamSummary, idx) => (
+                      <div key={idx} className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-indigo-200 dark:border-indigo-700">
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <p className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                              Review #{teamSummary.review_id}
+                            </p>
+                            {teamSummary.team_member && (
+                              <p className="text-xs text-indigo-600 dark:text-indigo-400">
+                                by {teamSummary.team_member}
+                              </p>
+                            )}
+                          </div>
+                          <span className={`text-xs px-2 py-1 rounded ${
+                            teamSummary.sentiment === 'positive' 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                              : teamSummary.sentiment === 'negative'
+                              ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                          }`}>
+                            {teamSummary.sentiment || 'neutral'} sentiment
+                          </span>
+                        </div>
+                        <p className="text-sm text-indigo-800 dark:text-indigo-200 leading-relaxed mb-3">
+                          {teamSummary.summary}
+                        </p>
+                        {teamSummary.topics && teamSummary.topics.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-indigo-200 dark:border-indigo-700">
+                            <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 mb-1">Topics:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {teamSummary.topics.map((topic, tIdx) => (
+                                <span key={tIdx} className="text-xs px-2 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 rounded">
+                                  {topic}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>

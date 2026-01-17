@@ -16,12 +16,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def synthesize_report(pr_analysis: dict, meeting_analysis: dict) -> dict:
-    """Synthesize PR and Meeting analyses into comprehensive report"""
+def synthesize_report(pr_analysis: dict, meeting_analysis: dict, team_analysis: dict = None) -> dict:
+    """Synthesize PR, Meeting, and Team analyses into comprehensive report"""
     
     # Extract key data
-    pr_results = pr_analysis.get("analyses", [])
-    meeting_results = meeting_analysis.get("analyses", [])
+    pr_results = pr_analysis.get("analyses", []) if pr_analysis else []
+    meeting_results = meeting_analysis.get("analyses", []) if meeting_analysis else []
+    team_results = team_analysis.get("analyses", []) if team_analysis else []
     
     # Build executive summary
     report = {
@@ -49,7 +50,13 @@ def synthesize_report(pr_analysis: dict, meeting_analysis: dict) -> dict:
         "recommendations": [],
         "action_items": [],
         "detailed_pr_summaries": [],
-        "detailed_meeting_summaries": []
+        "detailed_meeting_summaries": [],
+        "team_insights": {
+            "reviews_analyzed": len(team_results),
+            "overall_sentiment": None,
+            "topics_identified": 0
+        },
+        "detailed_team_summaries": []
     }
     
     # PR Summary - use new summary_paragraph and include patch_analysis
@@ -86,6 +93,26 @@ def synthesize_report(pr_analysis: dict, meeting_analysis: dict) -> dict:
             if analysis.get("status") == "completed":
                 report["action_items"].extend(analysis.get("action_items", []))
     
+    # Team Summary
+    if team_results:
+        report["detailed_team_summaries"] = [
+            {
+                "review_id": a.get("review_id"),
+                "team_member": a.get("team_member"),
+                "sentiment": a.get("sentiment"),
+                "topics": a.get("topics", []),
+                "summary": a.get("summary_paragraph") or a.get("summary", "")[:500],
+                "created_at": a.get("created_at")
+            }
+            for a in team_results if a.get("status") == "completed"
+        ]
+        
+        # Update team insights
+        if team_results:
+            first_result = team_results[0]
+            report["team_insights"]["overall_sentiment"] = first_result.get("sentiment")
+            report["team_insights"]["topics_identified"] = len(first_result.get("topics", []))
+    
     # Generate recommendations
     pr_insights = report["pr_insights"]
     meeting_insights = report["meeting_insights"]
@@ -109,6 +136,18 @@ def synthesize_report(pr_analysis: dict, meeting_analysis: dict) -> dict:
         report["recommendations"].append(
             "PR activity and meeting action items are aligned - continue coordinated development efforts"
         )
+    
+    # Team feedback recommendations
+    if team_results:
+        team_sentiment = team_results[0].get("sentiment") if team_results else None
+        if team_sentiment == "negative":
+            report["recommendations"].append(
+                "Team feedback indicates concerns - schedule follow-up discussion to address issues"
+            )
+        elif team_sentiment == "positive":
+            report["recommendations"].append(
+                "Team feedback is positive - maintain current momentum and practices"
+            )
     
     if not report["recommendations"]:
         report["recommendations"].append("All systems operational - no immediate concerns identified")
@@ -181,6 +220,17 @@ def synthesize_report(pr_analysis: dict, meeting_analysis: dict) -> dict:
         if meeting_insights['total_attendees'] > 0:
             summary_parts.append(f"The meetings involved {meeting_insights['total_attendees']} participant{'s' if meeting_insights['total_attendees'] != 1 else ''}, indicating strong team engagement.")
     
+    # Incorporate Team feedback
+    team_insights = report.get("team_insights", {})
+    if team_results:
+        team_summary = team_results[0].get("summary_paragraph") or team_results[0].get("summary", "")
+        if team_summary:
+            team_excerpt = team_summary[:200] if len(team_summary) > 200 else team_summary
+            summary_parts.append(f"Team Feedback: {team_excerpt}.")
+        elif team_insights.get("overall_sentiment"):
+            sentiment = team_insights["overall_sentiment"]
+            summary_parts.append(f"Team feedback shows a {sentiment} sentiment, indicating {sentiment} team morale and engagement.")
+    
     # Recommendations
     if report['recommendations']:
         if len(report['recommendations']) == 1:
@@ -212,8 +262,9 @@ def handle_join_event(payload: dict):
         if not meeting_analysis or meeting_analysis.get("status") != "completed":
             logger.warning("Meeting analysis missing or incomplete")
         
-        # Synthesize report
-        report = synthesize_report(pr_analysis, meeting_analysis)
+        # Synthesize report (include team analysis if available)
+        team_analysis = payload.get("team_analysis")
+        report = synthesize_report(pr_analysis, meeting_analysis, team_analysis)
         
         # Store report in storage (accessible via API)
         full_report = {
