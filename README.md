@@ -1,4 +1,5 @@
 # Squire - Hackathon Project
+# SOLACE + SENTRY + SURVEYMONKEY
 
 A clean scaffolding for the Squire hackathon project with FastAPI backend and React + TypeScript frontend.
 
