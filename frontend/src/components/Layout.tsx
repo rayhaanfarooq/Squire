@@ -1,5 +1,5 @@
-import { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { ReactNode, useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { useBackendHealth } from '../hooks/useBackendHealth'
 
 interface LayoutProps {
@@ -8,6 +8,11 @@ interface LayoutProps {
 
 function Layout({ children }: LayoutProps) {
   const health = useBackendHealth()
+  const location = useLocation()
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [location.pathname])
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-slate-950 to-black relative">
@@ -21,8 +26,13 @@ function Layout({ children }: LayoutProps) {
       {/* Space theme CSS animations */}
       <style>{`
         @keyframes twinkle {
-          0%, 100% { opacity: 0.2; }
-          50% { opacity: 0.8; }
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
+        }
+        
+        @keyframes moveStars {
+          from { transform: translateY(0); }
+          to { transform: translateY(-200px); }
         }
         
         .stars, .stars2, .stars3 {
@@ -38,34 +48,42 @@ function Layout({ children }: LayoutProps) {
         
         .stars {
           background-image: 
-            radial-gradient(2px 2px at 20px 30px, white, transparent),
-            radial-gradient(2px 2px at 60px 70px, white, transparent),
-            radial-gradient(1px 1px at 50px 50px, white, transparent),
-            radial-gradient(1px 1px at 130px 80px, white, transparent),
-            radial-gradient(2px 2px at 90px 10px, white, transparent);
+            radial-gradient(3px 3px at 20px 30px, rgba(255, 255, 255, 0.95), transparent),
+            radial-gradient(3px 3px at 60px 70px, rgba(255, 255, 255, 0.9), transparent),
+            radial-gradient(2px 2px at 50px 50px, rgba(200, 220, 255, 0.85), transparent),
+            radial-gradient(2px 2px at 130px 80px, rgba(255, 240, 200, 0.9), transparent),
+            radial-gradient(3px 3px at 90px 10px, rgba(255, 255, 255, 0.95), transparent),
+            radial-gradient(2px 2px at 150px 120px, rgba(220, 230, 255, 0.85), transparent),
+            radial-gradient(2px 2px at 180px 45px, rgba(255, 250, 220, 0.9), transparent);
           background-repeat: repeat;
           background-size: 200px 200px;
-          animation: twinkle 3s ease-in-out infinite;
+          animation: twinkle 3s ease-in-out infinite, moveStars 40s linear infinite;
         }
         
         .stars2 {
           background-image: 
-            radial-gradient(1px 1px at 40px 60px, white, transparent),
-            radial-gradient(1px 1px at 110px 90px, white, transparent),
-            radial-gradient(1px 1px at 160px 40px, white, transparent);
+            radial-gradient(2px 2px at 40px 60px, rgba(255, 255, 255, 0.9), transparent),
+            radial-gradient(2px 2px at 110px 90px, rgba(200, 220, 255, 0.85), transparent),
+            radial-gradient(2px 2px at 160px 40px, rgba(255, 240, 200, 0.85), transparent),
+            radial-gradient(1px 1px at 80px 110px, rgba(255, 255, 255, 0.8), transparent),
+            radial-gradient(2px 2px at 30px 140px, rgba(220, 230, 255, 0.9), transparent),
+            radial-gradient(1px 1px at 170px 75px, rgba(255, 250, 220, 0.85), transparent);
           background-repeat: repeat;
           background-size: 200px 200px;
-          animation: twinkle 4s ease-in-out infinite;
+          animation: twinkle 4s ease-in-out infinite, moveStars 50s linear infinite;
           animation-delay: 1s;
         }
         
         .stars3 {
           background-image: 
-            radial-gradient(1px 1px at 75px 25px, white, transparent),
-            radial-gradient(1px 1px at 180px 100px, white, transparent);
+            radial-gradient(2px 2px at 75px 25px, rgba(255, 255, 255, 0.95), transparent),
+            radial-gradient(2px 2px at 180px 100px, rgba(200, 220, 255, 0.9), transparent),
+            radial-gradient(1px 1px at 120px 65px, rgba(255, 240, 200, 0.85), transparent),
+            radial-gradient(2px 2px at 45px 135px, rgba(255, 255, 255, 0.9), transparent),
+            radial-gradient(1px 1px at 155px 15px, rgba(220, 230, 255, 0.85), transparent);
           background-repeat: repeat;
           background-size: 200px 200px;
-          animation: twinkle 5s ease-in-out infinite;
+          animation: twinkle 5s ease-in-out infinite, moveStars 60s linear infinite;
           animation-delay: 2s;
         }
 
