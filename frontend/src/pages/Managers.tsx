@@ -52,7 +52,11 @@ const Managers = () => {
         const observer = new IntersectionObserver(
           (entries) => {
             entries.forEach((entry) => {
-              if (entry.isIntersecting) {
+              const rect = entry.boundingClientRect;
+              const viewportHeight = window.innerHeight;
+              
+              // Check if section is in viewport and not scrolled past the top
+              if (entry.isIntersecting && rect.top < viewportHeight * 0.8) {
                 setVisibleSections((prev) => new Set(prev).add(index));
               } else {
                 setVisibleSections((prev) => {
@@ -64,8 +68,8 @@ const Managers = () => {
             });
           },
           {
-            threshold: 0.2,
-            rootMargin: '0px 0px -100px 0px',
+            threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5],
+            rootMargin: '-10% 0px -20% 0px',
           }
         );
 
@@ -88,7 +92,7 @@ const Managers = () => {
             className={`text-7xl md:text-9xl mb-12 bg-gradient-to-r from-white to-blue-900 bg-clip-text text-transparent transition-all duration-2000 ease-in-out ${
               titleLoaded && titleVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
             }`}
-            style={{ fontWeight: 900 }}
+            style={{ fontWeight: 900, backgroundSize: '200% 200%', animation: 'gradient-shift 5.2s ease infinite', animationDelay: '0.5s', filter: 'drop-shadow(0 0 20px rgba(59, 130, 246, 0.5))' }}
           >
             Manager Performance Survey
           </h1>
@@ -109,7 +113,7 @@ const Managers = () => {
       >
         <div className="max-w-4xl mx-auto">
           <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-md rounded-3xl p-8 md:p-10 border-2 border-transparent bg-clip-padding" style={{ background: 'linear-gradient(#1e293b, #0f172a) padding-box, linear-gradient(to right, #64748b, #1e3a8a) border-box' }}>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-center bg-gradient-to-r from-purple-200 to-blue-300 bg-clip-text">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-center bg-gradient-to-r from-purple-200 to-blue-300 bg-clip-text" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 2.9s ease infinite', animationDelay: '1.3s', filter: 'drop-shadow(0 0 18px rgba(147, 197, 253, 0.45))' }}>
               Why Your Feedback Matters
             </h2>
             <div className="space-y-5 text-lg text-slate-200 leading-relaxed text-center">
@@ -149,14 +153,14 @@ const Managers = () => {
         }`}
       >
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold mb-12 text-center bg-gradient-to-r from-yellow-300 to-orange-400 bg-clip-text text-transparent">
+          <h2 className="text-4xl md:text-5xl font-bold mb-12 text-center bg-gradient-to-r from-yellow-300 to-orange-400 bg-clip-text text-transparent" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 4.3s ease infinite', animationDelay: '0.4s', filter: 'drop-shadow(0 0 18px rgba(251, 191, 36, 0.45))' }}>
             Earn Rewards for Your Feedback
           </h2>
           
           <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-md rounded-3xl p-8 border-2 border-transparent bg-clip-padding mb-12" style={{ background: 'linear-gradient(#1e293b, #0f172a) padding-box, linear-gradient(to right, #64748b, #1e3a8a) border-box' }}>
             <div className="flex flex-col md:flex-row items-center justify-between gap-8">
               <div className="text-center md:text-left">
-                <h3 className="text-3xl font-bold text-yellow-300 mb-2">Your Points Balance</h3>
+                <h3 className="text-3xl font-bold bg-gradient-to-r from-yellow-200 via-yellow-400 to-orange-300 bg-clip-text text-transparent mb-2" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 4.2s ease infinite', animationDelay: '0.7s', filter: 'drop-shadow(0 0 15px rgba(253, 224, 71, 0.4))' }}>Your Points Balance</h3>
                 <p className="text-slate-300">Complete surveys to earn points</p>
               </div>
               <div className="relative">
@@ -172,8 +176,8 @@ const Managers = () => {
             <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl p-6 border-2 border-transparent bg-clip-padding transition-all duration-500" style={{ background: 'linear-gradient(#1e293b80, #0f172a80) padding-box, linear-gradient(to right, #64748b, #2563eb) border-box' }}>
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">🎁</div>
-                <h3 className="text-xl font-semibold text-green-300 mb-2">$10 Gift Card</h3>
-                <p className="text-3xl font-bold text-white mb-2">100 pts</p>
+                <h3 className="text-xl font-semibold bg-gradient-to-r from-green-200 to-emerald-400 bg-clip-text text-transparent mb-2" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 3.6s ease infinite', animationDelay: '0.3s', filter: 'drop-shadow(0 0 12px rgba(134, 239, 172, 0.35))' }}>$10 Gift Card</h3>
+                <p className="text-3xl font-bold bg-gradient-to-r from-white to-green-200 bg-clip-text text-transparent mb-2" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 2.7s ease infinite', animationDelay: '1.2s', filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.3))' }}>100 pts</p>
               </div>
               <ul className="text-sm text-slate-300 space-y-1">
                 <li>• Amazon</li>
@@ -185,8 +189,8 @@ const Managers = () => {
             <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl p-6 border-2 border-transparent bg-clip-padding transition-all duration-500" style={{ background: 'linear-gradient(#1e293b80, #0f172a80) padding-box, linear-gradient(to right, #475569, #1e40af) border-box' }}>
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">💳</div>
-                <h3 className="text-xl font-semibold text-blue-300 mb-2">$25 Gift Card</h3>
-                <p className="text-3xl font-bold text-white mb-2">250 pts</p>
+                <h3 className="text-xl font-semibold bg-gradient-to-r from-blue-200 to-cyan-400 bg-clip-text text-transparent mb-2" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 3.1s ease infinite', animationDelay: '0.6s', filter: 'drop-shadow(0 0 12px rgba(147, 197, 253, 0.35))' }}>$25 Gift Card</h3>
+                <p className="text-3xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent mb-2" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 4.5s ease infinite', animationDelay: '0.9s', filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.3))' }}>250 pts</p>
               </div>
               <ul className="text-sm text-slate-300 space-y-1">
                 <li>• Target</li>
@@ -198,8 +202,8 @@ const Managers = () => {
             <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl p-6 border-2 border-transparent bg-clip-padding transition-all duration-500" style={{ background: 'linear-gradient(#1e293b80, #0f172a80) padding-box, linear-gradient(to right, #334155, #1e3a8a) border-box' }}>
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">🏆</div>
-                <h3 className="text-xl font-semibold text-purple-300 mb-2">$50 Gift Card</h3>
-                <p className="text-3xl font-bold text-white mb-2">500 pts</p>
+                <h3 className="text-xl font-semibold bg-gradient-to-r from-purple-200 to-pink-400 bg-clip-text text-transparent mb-2" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 2.5s ease infinite', animationDelay: '1.4s', filter: 'drop-shadow(0 0 12px rgba(216, 180, 254, 0.35))' }}>$50 Gift Card</h3>
+                <p className="text-3xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent mb-2" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 3.9s ease infinite', animationDelay: '0.4s', filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.3))' }}>500 pts</p>
               </div>
               <ul className="text-sm text-slate-300 space-y-1">
                 <li>• Apple Store</li>
@@ -210,11 +214,11 @@ const Managers = () => {
           </div>
 
           <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border-2 border-transparent bg-clip-padding rounded-2xl p-6" style={{ background: 'linear-gradient(to right, #06b6d410, #3b82f610) padding-box, linear-gradient(to right, #64748b, #1e3a8a) border-box' }}>
-            <h3 className="text-2xl font-bold text-cyan-300 mb-4 text-center">Earn:</h3>
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-cyan-200 to-blue-400 bg-clip-text text-transparent mb-4 text-center" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 4.7s ease infinite', animationDelay: '0.2s', filter: 'drop-shadow(0 0 15px rgba(103, 232, 249, 0.4))' }}>Earn:</h3>
             <div className="flex justify-center">
               <div className="text-center">
-                <div className="text-6xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text mb-3">10 Points!</div>
-                <p className="text-xl text-slate-200 font-medium">Every time you complete the survey</p>
+                <div className="text-6xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text mb-3" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 3.6s ease infinite', animationDelay: '0.9s', filter: 'drop-shadow(0 0 22px rgba(103, 232, 249, 0.5))' }}>10 Points!</div>
+                <p className="text-xl bg-gradient-to-r from-slate-100 to-blue-200 bg-clip-text text-transparent font-medium" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 3.3s ease infinite', animationDelay: '0.8s', filter: 'drop-shadow(0 0 8px rgba(226, 232, 240, 0.25))' }}>Every time you complete the survey</p>
                 <p className="text-sm text-slate-400 mt-2">Keep submitting to accumulate points!</p>
               </div>
             </div>
@@ -226,7 +230,7 @@ const Managers = () => {
       <section className="py-20 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-300 to-blue-300 bg-clip-text text-transparent mb-4">
+            <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-300 to-blue-300 bg-clip-text text-transparent mb-4" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 4.9s ease infinite', animationDelay: '0.2s', filter: 'drop-shadow(0 0 18px rgba(216, 180, 254, 0.45))' }}>
               Share Your Feedback
             </h2>
             <p className="text-xl text-slate-300">
