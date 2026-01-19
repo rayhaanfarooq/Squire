@@ -132,10 +132,9 @@ if [ -f "configs/gateways/rest.yaml" ]; then
 fi
 
 # Include WebUI gateway (optional, for web interface)
-# Uncomment if you want both REST API and WebUI
-# if [ -f "configs/webui.yaml" ]; then
-#   CONFIGS="$CONFIGS configs/webui.yaml"
-# fi
+if [ -f "configs/webui.yaml" ]; then
+  CONFIGS="$CONFIGS configs/webui.yaml"
+fi
 
 # Check for agent configs and add them if they exist
 AGENT_COUNT=0

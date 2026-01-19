@@ -7,8 +7,11 @@ const TeamMembers = () => {
   const [subtitleLoaded, setSubtitleLoaded] = useState(false);
   const [titleVisible, setTitleVisible] = useState(true);
   const [visibleSections, setVisibleSections] = useState<Set<number>>(new Set());
+  const [sectionDirections, setSectionDirections] = useState<Map<number, 'down' | 'up'>>(new Map());
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const sectionRefs = useRef<(HTMLElement | null)[]>([]);
   const heroRef = useRef<HTMLElement | null>(null);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     // Initial fade in
@@ -47,6 +50,29 @@ const TeamMembers = () => {
   useEffect(() => {
     const observers: IntersectionObserver[] = [];
 
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollDirection = currentScrollY > lastScrollY.current ? 'down' : 'up';
+      lastScrollY.current = currentScrollY;
+      
+      sectionRefs.current.forEach((section, index) => {
+        if (section) {
+          const rect = section.getBoundingClientRect();
+          const isVisible = rect.top < window.innerHeight * 0.8 && rect.bottom > 0;
+          
+          if (isVisible) {
+            setSectionDirections((prev) => {
+              const newMap = new Map(prev);
+              newMap.set(index, scrollDirection);
+              return newMap;
+            });
+          }
+        }
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
     sectionRefs.current.forEach((section, index) => {
       if (section) {
         const observer = new IntersectionObserver(
@@ -54,11 +80,28 @@ const TeamMembers = () => {
             entries.forEach((entry) => {
               const rect = entry.boundingClientRect;
               const viewportHeight = window.innerHeight;
+              const currentScrollY = window.scrollY;
+              const scrollDirection = currentScrollY > lastScrollY.current ? 'down' : 'up';
               
-              // Check if section is in viewport and not scrolled past the top
+              // Show when scrolling down and entering viewport
               if (entry.isIntersecting && rect.top < viewportHeight * 0.8) {
                 setVisibleSections((prev) => new Set(prev).add(index));
-              } else {
+                setSectionDirections((prev) => {
+                  const newMap = new Map(prev);
+                  newMap.set(index, scrollDirection);
+                  return newMap;
+                });
+              } 
+              // Hide sooner when scrolling up - when top of element goes above 20% of viewport
+              else if (scrollDirection === 'up' && rect.top < viewportHeight * 0.2) {
+                setVisibleSections((prev) => {
+                  const newSet = new Set(prev);
+                  newSet.delete(index);
+                  return newSet;
+                });
+              }
+              // Hide normally when not intersecting and scrolling down
+              else if (!entry.isIntersecting) {
                 setVisibleSections((prev) => {
                   const newSet = new Set(prev);
                   newSet.delete(index);
@@ -79,6 +122,7 @@ const TeamMembers = () => {
     });
 
     return () => {
+      window.removeEventListener('scroll', handleScroll);
       observers.forEach((observer) => observer.disconnect());
     };
   }, []);
@@ -87,18 +131,20 @@ const TeamMembers = () => {
     <div className="min-h-screen text-white">
       {/* Hero Section - Full Screen */}
       <section ref={heroRef} className="relative overflow-hidden min-h-screen flex items-center justify-center px-6">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-950/40 via-slate-900/40 to-purple-950/40 opacity-50"></div>
         <div className="max-w-6xl mx-auto text-center relative z-10">
           <h1
-            className={`text-7xl md:text-9xl mb-12 bg-gradient-to-r from-white to-blue-900 bg-clip-text text-transparent transition-all duration-2000 ease-in-out ${
+            className={`text-5xl md:text-7xl lg:text-8xl mb-8 bg-gradient-to-r from-white via-blue-100 to-blue-400 bg-clip-text text-transparent transition-all duration-1000 ease-out animate-gradient-3 ${
               titleLoaded && titleVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
             }`}
-            style={{ fontWeight: 900, backgroundSize: '200% 200%', animation: 'gradient-shift 3.1s ease infinite', animationDelay: '1.4s', filter: 'drop-shadow(0 0 20px rgba(59, 130, 246, 0.5))' }}
+            style={{ fontWeight: 900, lineHeight: '1.1', filter: 'drop-shadow(0 0 30px rgba(59, 130, 246, 0.4))' }}
           >
             Team Member Performance Survey
           </h1>
-          <p className={`text-2xl md:text-3xl text-blue-100 max-w-3xl mx-auto font-medium transition-all duration-1500 ease-in-out ${
-            subtitleLoaded && titleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          <p className={`text-xl md:text-2xl text-blue-100/90 max-w-3xl mx-auto font-light leading-relaxed transition-all duration-700 ease-out ${
+            subtitleLoaded && titleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           }`}>
+            Help us enhance our program through your valuable insights
           </p>
         </div>
       </section>
@@ -107,39 +153,46 @@ const TeamMembers = () => {
       {/* Performance Section 3 - Survey Purpose Description */}
       <section
         ref={(el) => (sectionRefs.current[3] = el)}
-        className={`py-16 px-6 transition-all duration-1000 ${
-          visibleSections.has(3) ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        className={`py-20 px-6 transition-all duration-1000 ease-out ${
+          visibleSections.has(3)
+            ? 'opacity-100 translate-x-0 translate-y-0 rotate-0'
+            : sectionDirections.get(3) === 'up'
+            ? 'opacity-0 -translate-y-32 -rotate-3'
+            : 'opacity-0 translate-y-32 rotate-3'
         }`}
       >
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-md rounded-3xl p-8 md:p-10 border-2 border-transparent bg-clip-padding" style={{ background: 'linear-gradient(#1e293b, #0f172a) padding-box, linear-gradient(to right, #64748b, #1e3a8a) border-box' }}>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-center bg-gradient-to-r from-purple-200 to-blue-300 bg-clip-text" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 4.6s ease infinite', animationDelay: '0.3s', filter: 'drop-shadow(0 0 18px rgba(147, 197, 253, 0.45))' }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-3xl p-10 md:p-14 border border-slate-700/50 shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 hover:border-slate-600/50">
+            <h2 className="text-4xl md:text-5xl font-bold mb-10 text-center bg-gradient-to-r from-blue-200 via-cyan-200 to-purple-300 bg-clip-text text-transparent animate-gradient-wave">
               Why Your Feedback Matters
             </h2>
-            <div className="space-y-5 text-lg text-slate-200 leading-relaxed text-center">
-              <p>
-                Your insights help us create better experiences for everyone in our internship program. 
-                By sharing your perspective, you contribute to:                                                                                                                                                                                                                                                                       
-
-
+            <div className="space-y-8">
+              <p className="text-lg md:text-xl text-slate-200/90 leading-relaxed text-center max-w-3xl mx-auto">
+                Your insights help us create better experiences for everyone in our program. 
+                By sharing your perspective, you contribute to:
               </p>
-              <ul className="space-y-3 max-w-2xl mx-auto text-left">
-                <li className="flex items-start">
-                  <span className="text-cyan-400 mr-3 text-2xl">✦</span>
-                  <span><strong className="text-cyan-300">Improving our processes</strong> to better support interns and team members</span>
+              <ul className="space-y-5 max-w-2xl mx-auto">
+                <li className="flex items-start group hover:translate-x-2 transition-transform duration-300">
+                  <span className="text-cyan-400 mr-4 text-xl mt-1 group-hover:scale-110 transition-transform duration-300">✦</span>
+                  <span className="text-base md:text-lg text-slate-200/90"><strong className="text-cyan-300 font-semibold">Improving our processes</strong> to better support interns and team members</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-blue-400 mr-3 text-2xl">✦</span>
-                  <span><strong className="text-blue-300">Keeping Talent</strong> make sure high performing interns stay within the company</span>
+                <li className="flex items-start group hover:translate-x-2 transition-transform duration-300">
+                  <span className="text-blue-400 mr-4 text-xl mt-1 group-hover:scale-110 transition-transform duration-300">✦</span>
+                  <span className="text-base md:text-lg text-slate-200/90"><strong className="text-blue-300 font-semibold">Keeping talent</strong> ensuring high-performing interns stay within the company</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-purple-400 mr-3 text-2xl">✦</span>
-                  <span><strong className="text-purple-300">Shaping future programs</strong> based on real experiences and suggestions</span>
+                <li className="flex items-start group hover:translate-x-2 transition-transform duration-300">
+                  <span className="text-purple-400 mr-4 text-xl mt-1 group-hover:scale-110 transition-transform duration-300">✦</span>
+                  <span className="text-base md:text-lg text-slate-200/90"><strong className="text-purple-300 font-semibold">Shaping future programs</strong> based on real experiences and suggestions</span>
                 </li>
               </ul>
-              <p className="text-slate-300 mt-6">
-                Each survey takes just 1-5 minutes and your responses are completely confidential.
-              </p>
+              <div className="pt-6 text-center">
+                <p className="text-base text-slate-300/80 inline-flex items-center gap-2">
+                  <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Takes just 1-5 minutes • Completely confidential
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -148,78 +201,190 @@ const TeamMembers = () => {
       {/* Rewards Section */}
       <section
         ref={(el) => (sectionRefs.current[4] = el)}
-        className={`py-16 px-6 transition-all duration-1000 ${
-          visibleSections.has(4) ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-        }`}
+        className="py-20 px-6"
       >
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold mb-12 text-center bg-gradient-to-r from-yellow-300 to-orange-400 bg-clip-text text-transparent" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 3.7s ease infinite', animationDelay: '0.7s', filter: 'drop-shadow(0 0 18px rgba(251, 191, 36, 0.45))' }}>
+          <h2 className={`text-4xl md:text-5xl font-bold mb-16 text-center bg-gradient-to-r from-yellow-300 via-orange-300 to-pink-400 bg-clip-text text-transparent animate-gradient-1 transition-all duration-1000 ease-out ${
+            visibleSections.has(4)
+              ? 'opacity-100 translate-y-0'
+              : sectionDirections.get(4) === 'up'
+              ? 'opacity-0 -translate-y-12'
+              : 'opacity-0 translate-y-12'
+          }`}
+          style={{ transitionDelay: visibleSections.has(4) ? '0ms' : (sectionDirections.get(4) === 'up' ? '1000ms' : '0ms') }}>
             Earn Rewards for Your Feedback
           </h2>
           
-          <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-md rounded-3xl p-8 border-2 border-transparent bg-clip-padding mb-12" style={{ background: 'linear-gradient(#1e293b, #0f172a) padding-box, linear-gradient(to right, #64748b, #1e3a8a) border-box' }}>
+          <div className={`bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-3xl p-8 md:p-10 border border-slate-700/50 shadow-2xl mb-12 hover:shadow-yellow-500/10 transition-all duration-1000 ease-out ${
+            visibleSections.has(4)
+              ? 'opacity-100 translate-y-0 scale-100 rotate-0'
+              : sectionDirections.get(4) === 'up'
+              ? 'opacity-0 -translate-y-20 scale-95 -rotate-2'
+              : 'opacity-0 translate-y-20 scale-95 rotate-2'
+          } hover:border-slate-600/50`} style={{ transitionDelay: visibleSections.has(4) ? '200ms' : (sectionDirections.get(4) === 'up' ? '800ms' : '200ms') }}>
             <div className="flex flex-col md:flex-row items-center justify-between gap-8">
               <div className="text-center md:text-left">
-                <h3 className="text-3xl font-bold bg-gradient-to-r from-yellow-200 via-yellow-400 to-orange-300 bg-clip-text text-transparent mb-2" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 2.4s ease infinite', animationDelay: '1.1s', filter: 'drop-shadow(0 0 15px rgba(253, 224, 71, 0.4))' }}>Your Points Balance</h3>
-                <p className="text-slate-300">Complete surveys to earn points</p>
+                <h3 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-yellow-200 via-yellow-400 to-orange-300 bg-clip-text text-transparent mb-2">
+                  Your Points Balance
+                </h3>
+                <p className="text-slate-300/80 text-base">Complete surveys to earn points</p>
               </div>
-              <div className="relative">
-                <div className="text-7xl font-black bg-gradient-to-br from-yellow-400 via-orange-300 to-yellow-500 bg-clip-text ">
+              <div className="relative flex items-baseline">
+                <div className="text-7xl md:text-8xl font-black bg-gradient-to-br from-yellow-400 via-orange-400 to-yellow-500 bg-clip-text text-transparent">
                   XXX
                 </div>
-                <span className="text-2xl text-slate-400 ml-2">pts</span>
+                <span className="text-2xl md:text-3xl text-slate-400/80 ml-2">pts</span>
               </div>
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl p-6 border-2 border-transparent bg-clip-padding transition-all duration-500" style={{ background: 'linear-gradient(#1e293b80, #0f172a80) padding-box, linear-gradient(to right, #64748b, #2563eb) border-box' }}>
-              <div className="text-center mb-4">
-                <div className="text-4xl mb-2">🎁</div>
-                <h3 className="text-xl font-semibold bg-gradient-to-r from-green-200 to-emerald-400 bg-clip-text text-transparent mb-2" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 4.4s ease infinite', animationDelay: '0.5s', filter: 'drop-shadow(0 0 12px rgba(134, 239, 172, 0.35))' }}>$10 Gift Card</h3>
-                <p className="text-3xl font-bold bg-gradient-to-r from-white to-green-200 bg-clip-text text-transparent mb-2" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 3.8s ease infinite', animationDelay: '0.2s', filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.3))' }}>100 pts</p>
+          <div className="grid md:grid-cols-3 gap-6 mb-14">
+            <div 
+              onMouseEnter={() => setHoveredCard(0)}
+              onMouseLeave={() => setHoveredCard(null)}
+              className={`bg-slate-800/40 backdrop-blur-sm rounded-2xl p-7 border border-slate-700/50 cursor-pointer transition-all duration-1000 ease-out ${
+                hoveredCard === 0 ? 'transform -translate-y-2 shadow-2xl shadow-green-500/20 border-green-500/50' : 'hover:border-slate-600/50'
+              } ${
+                visibleSections.has(4)
+                  ? 'opacity-100 translate-x-0 translate-y-0 rotate-0 scale-100'
+                  : sectionDirections.get(4) === 'up'
+                  ? 'opacity-0 -translate-x-20 -translate-y-12 -rotate-3 scale-90'
+                  : 'opacity-0 -translate-x-20 translate-y-12 rotate-3 scale-90'
+              }`}
+              style={{ transitionDelay: visibleSections.has(4) ? '400ms' : (sectionDirections.get(4) === 'up' ? '600ms' : '400ms') }}
+            >
+              <div className="text-center mb-5">
+                <div className={`text-5xl mb-3 transition-transform duration-300 ${
+                  hoveredCard === 0 ? 'scale-110' : ''
+                }`}>🎁</div>
+                <h3 className="text-xl font-semibold bg-gradient-to-r from-green-300 to-emerald-400 bg-clip-text text-transparent mb-3">
+                  $10 Gift Card
+                </h3>
+                <p className="text-4xl font-bold bg-gradient-to-r from-white to-green-200 bg-clip-text text-transparent mb-2">
+                  100 pts
+                </p>
               </div>
-              <ul className="text-sm text-slate-300 space-y-1">
-                <li>• Amazon</li>
-                <li>• Starbucks</li>
-                <li>• iTunes</li>
+              <ul className="text-sm text-slate-300/90 space-y-2">
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+                  Amazon
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+                  Starbucks
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+                  iTunes
+                </li>
               </ul>
             </div>
 
-            <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl p-6 border-2 border-transparent bg-clip-padding transition-all duration-500" style={{ background: 'linear-gradient(#1e293b80, #0f172a80) padding-box, linear-gradient(to right, #475569, #1e40af) border-box' }}>
-              <div className="text-center mb-4">
-                <div className="text-4xl mb-2">💳</div>
-                <h3 className="text-xl font-semibold bg-gradient-to-r from-blue-200 to-cyan-400 bg-clip-text text-transparent mb-2" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 2.3s ease infinite', animationDelay: '1.5s', filter: 'drop-shadow(0 0 12px rgba(147, 197, 253, 0.35))' }}>$25 Gift Card</h3>
-                <p className="text-3xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent mb-2" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 5.1s ease infinite', animationDelay: '0.4s', filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.3))' }}>250 pts</p>
+            <div 
+              onMouseEnter={() => setHoveredCard(1)}
+              onMouseLeave={() => setHoveredCard(null)}
+              className={`bg-slate-800/40 backdrop-blur-sm rounded-2xl p-7 border border-slate-700/50 cursor-pointer transition-all duration-1000 ease-out ${
+                hoveredCard === 1 ? 'transform -translate-y-2 shadow-2xl shadow-blue-500/20 border-blue-500/50' : 'hover:border-slate-600/50'
+              } ${
+                visibleSections.has(4)
+                  ? 'opacity-100 translate-y-0 scale-100'
+                  : sectionDirections.get(4) === 'up'
+                  ? 'opacity-0 -translate-y-24 scale-90'
+                  : 'opacity-0 translate-y-24 scale-90'
+              }`}
+              style={{ transitionDelay: visibleSections.has(4) ? '600ms' : (sectionDirections.get(4) === 'up' ? '400ms' : '600ms') }}
+            >
+              <div className="text-center mb-5">
+                <div className={`text-5xl mb-3 transition-transform duration-300 ${
+                  hoveredCard === 1 ? 'scale-110' : ''
+                }`}>💳</div>
+                <h3 className="text-xl font-semibold bg-gradient-to-r from-blue-300 to-cyan-400 bg-clip-text text-transparent mb-3">
+                  $25 Gift Card
+                </h3>
+                <p className="text-4xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent mb-2">
+                  250 pts
+                </p>
               </div>
-              <ul className="text-sm text-slate-300 space-y-1">
-                <li>• Target</li>
-                <li>• Best Buy</li>
-                <li>• Uber Eats</li>
+              <ul className="text-sm text-slate-300/90 space-y-2">
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                  Target
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                  Best Buy
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                  Uber Eats
+                </li>
               </ul>
             </div>
 
-            <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl p-6 border-2 border-transparent bg-clip-padding transition-all duration-500" style={{ background: 'linear-gradient(#1e293b80, #0f172a80) padding-box, linear-gradient(to right, #334155, #1e3a8a) border-box' }}>
-              <div className="text-center mb-4">
-                <div className="text-4xl mb-2">🏆</div>
-                <h3 className="text-xl font-semibold bg-gradient-to-r from-purple-200 to-pink-400 bg-clip-text text-transparent mb-2" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 4.8s ease infinite', animationDelay: '0.3s', filter: 'drop-shadow(0 0 12px rgba(216, 180, 254, 0.35))' }}>$50 Gift Card</h3>
-                <p className="text-3xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent mb-2" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 2.1s ease infinite', animationDelay: '1.3s', filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.3))' }}>500 pts</p>
+            <div 
+              onMouseEnter={() => setHoveredCard(2)}
+              onMouseLeave={() => setHoveredCard(null)}
+              className={`bg-slate-800/40 backdrop-blur-sm rounded-2xl p-7 border border-slate-700/50 cursor-pointer transition-all duration-1000 ease-out ${
+                hoveredCard === 2 ? 'transform -translate-y-2 shadow-2xl shadow-purple-500/20 border-purple-500/50' : 'hover:border-slate-600/50'
+              } ${
+                visibleSections.has(4)
+                  ? 'opacity-100 translate-x-0 translate-y-0 rotate-0 scale-100'
+                  : sectionDirections.get(4) === 'up'
+                  ? 'opacity-0 translate-x-20 -translate-y-12 rotate-3 scale-90'
+                  : 'opacity-0 translate-x-20 translate-y-12 -rotate-3 scale-90'
+              }`}
+              style={{ transitionDelay: visibleSections.has(4) ? '800ms' : (sectionDirections.get(4) === 'up' ? '200ms' : '800ms') }}
+            >
+              <div className="text-center mb-5">
+                <div className={`text-5xl mb-3 transition-transform duration-300 ${
+                  hoveredCard === 2 ? 'scale-110' : ''
+                }`}>🏆</div>
+                <h3 className="text-xl font-semibold bg-gradient-to-r from-purple-300 to-pink-400 bg-clip-text text-transparent mb-3">
+                  $50 Gift Card
+                </h3>
+                <p className="text-4xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent mb-2">
+                  500 pts
+                </p>
               </div>
-              <ul className="text-sm text-slate-300 space-y-1">
-                <li>• Apple Store</li>
-                <li>• Netflix</li>
-                <li>• DoorDash</li>
+              <ul className="text-sm text-slate-300/90 space-y-2">
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                  Apple Store
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                  Netflix
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                  DoorDash
+                </li>
               </ul>
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border-2 border-transparent bg-clip-padding rounded-2xl p-6" style={{ background: 'linear-gradient(to right, #06b6d410, #3b82f610) padding-box, linear-gradient(to right, #64748b, #1e3a8a) border-box' }}>
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-cyan-200 to-blue-400 bg-clip-text text-transparent mb-4 text-center" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 3.5s ease infinite', animationDelay: '0.9s', filter: 'drop-shadow(0 0 15px rgba(103, 232, 249, 0.4))' }}>Earn:</h3>
+          <div className={`bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-2xl p-8 md:p-10 hover:border-cyan-500/50 transition-all duration-1000 ease-out hover:shadow-cyan-500/20 shadow-xl ${
+            visibleSections.has(4)
+              ? 'opacity-100 translate-y-0 scale-100 rotate-0'
+              : sectionDirections.get(4) === 'up'
+              ? 'opacity-0 -translate-y-20 scale-95 -rotate-1'
+              : 'opacity-0 translate-y-20 scale-95 rotate-1'
+          }`} style={{ transitionDelay: visibleSections.has(4) ? '1000ms' : (sectionDirections.get(4) === 'up' ? '0ms' : '1000ms') }}>
             <div className="flex justify-center">
               <div className="text-center">
-                <div className="text-6xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text mb-3" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 2.2s ease infinite', animationDelay: '1.1s', filter: 'drop-shadow(0 0 22px rgba(103, 232, 249, 0.5))' }}>10 Points!</div>
-                <p className="text-xl bg-gradient-to-r from-slate-100 to-blue-200 bg-clip-text text-transparent font-medium" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 4.6s ease infinite', animationDelay: '0.6s', filter: 'drop-shadow(0 0 8px rgba(226, 232, 240, 0.25))' }}>Every time you complete the survey</p>
-                <p className="text-sm text-slate-400 mt-2">Keep submitting to accumulate points!</p>
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-cyan-200 to-blue-300 bg-clip-text text-transparent mb-5">Earn Per Survey</h3>
+                <div className="inline-flex items-baseline gap-2 mb-4">
+                  <div className="text-6xl md:text-7xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+                    10
+                  </div>
+                  <span className="text-3xl md:text-4xl text-cyan-300/80 font-semibold">Points!</span>
+                </div>
+                <p className="text-lg md:text-xl text-slate-100/90 font-medium mb-2">
+                  Every time you complete the survey
+                </p>
+                <p className="text-sm text-slate-400/80">
+                  Keep submitting to accumulate points and earn rewards
+                </p>
               </div>
             </div>
           </div>
@@ -227,22 +392,20 @@ const TeamMembers = () => {
       </section>
 
       {/* Survey Feedback Section */}
-      <section className="py-20 px-6">
+      <section className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-300 to-blue-300 bg-clip-text text-transparent mb-4" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 5.4s ease infinite', animationDelay: '0.4s', filter: 'drop-shadow(0 0 18px rgba(216, 180, 254, 0.45))' }}>
+          <div className="text-center mb-14">
+            <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-300 via-blue-300 to-cyan-300 bg-clip-text text-transparent mb-5">
               Share Your Feedback
             </h2>
-            <p className="text-xl text-slate-300">
+            <p className="text-lg md:text-xl text-slate-300/90 max-w-2xl mx-auto">
               Help us improve by completing the team member survey
             </p>
           </div>
 
           {/* Survey Panel */}
           <div className="relative min-h-[600px]">
-            <div
-              className="bg-slate-900/50 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border border-slate-700/50 transition-all duration-500 opacity-100 translate-y-0"
-            >
+            <div className="bg-slate-900/40 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-slate-700/50 hover:border-slate-600/50 transition-all duration-500">
               <div className="relative w-full" style={{ paddingBottom: '80%' }}>
                 <iframe
                   src={teamMemberSurveyUrl}
@@ -251,9 +414,11 @@ const TeamMembers = () => {
                   aria-label="Team Member Performance Survey"
                 />
               </div>
-              <p className="text-center text-slate-400 py-4 text-sm">
-                Complete the survey above to provide feedback
-              </p>
+              <div className="bg-slate-800/50 py-4 px-6">
+                <p className="text-center text-slate-400/80 text-sm">
+                  Complete the survey above to provide feedback and earn 10 points
+                </p>
+              </div>
             </div>
           </div>
         </div>

@@ -23,6 +23,13 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  /* Hide scrollbar */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 #root {
@@ -48,5 +55,224 @@ body {
   100% {
     background-position: 0% 50%;
   }
+}
+
+@keyframes gradient-flow-1 {
+  0% {
+    background-position: 0% 0%;
+  }
+  25% {
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 50% 100%;
+  }
+  75% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 0% 0%;
+  }
+}
+
+@keyframes gradient-flow-2 {
+  0% {
+    background-position: 100% 0%;
+  }
+  33% {
+    background-position: 0% 100%;
+  }
+  66% {
+    background-position: 100% 100%;
+  }
+  100% {
+    background-position: 100% 0%;
+  }
+}
+
+@keyframes gradient-flow-3 {
+  0% {
+    background-position: 50% 50%;
+  }
+  20% {
+    background-position: 80% 20%;
+  }
+  40% {
+    background-position: 20% 80%;
+  }
+  60% {
+    background-position: 90% 90%;
+  }
+  80% {
+    background-position: 10% 10%;
+  }
+  100% {
+    background-position: 50% 50%;
+  }
+}
+
+@keyframes gradient-wave {
+  0%, 100% {
+    background-position: 0% 50%, 100% 50%;
+  }
+  25% {
+    background-position: 50% 0%, 50% 100%;
+  }
+  50% {
+    background-position: 100% 50%, 0% 50%;
+  }
+  75% {
+    background-position: 50% 100%, 50% 0%;
+  }
+}
+
+@keyframes gradient-spiral {
+  0% {
+    background-position: 0% 0%;
+    transform: rotate(0deg);
+  }
+  25% {
+    background-position: 100% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+    transform: rotate(180deg);
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+  100% {
+    background-position: 0% 0%;
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes gradient-pulse {
+  0%, 100% {
+    background-position: 50% 50%;
+    background-size: 200% 200%;
+  }
+  50% {
+    background-position: 50% 50%;
+    background-size: 300% 300%;
+  }
+}
+
+@keyframes gradient-border {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Custom text selection with animated gradient */
+::selection {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3));
+  color: #fff;
+  text-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+::-moz-selection {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3));
+  color: #fff;
+  text-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+/* Animated gradient outline for focused/active elements */
+*:focus-visible {
+  outline: none;
+  position: relative;
+}
+
+*:focus-visible::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    90deg,
+    #3b82f6,
+    #8b5cf6,
+    #ec4899,
+    #3b82f6
+  );
+  background-size: 200% 200%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: gradient-border 3s ease infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* For input and textarea elements */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+  position: relative;
+}
+
+input:focus-visible::after,
+textarea:focus-visible::after,
+select:focus-visible::after,
+button:focus-visible::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    #3b82f6,
+    #8b5cf6,
+    #ec4899,
+    #06b6d4,
+    #3b82f6
+  );
+  background-size: 300% 300%;
+  animation: gradient-border 4s linear infinite;
+  opacity: 0.6;
+  z-index: -1;
+  filter: blur(4px);
+}
+
+/* Animated gradient utility classes */
+.animate-gradient-1 {
+  background-size: 400% 400%;
+  animation: gradient-flow-1 8s ease-in-out infinite;
+}
+
+.animate-gradient-2 {
+  background-size: 400% 400%;
+  animation: gradient-flow-2 12s ease-in-out infinite;
+}
+
+.animate-gradient-3 {
+  background-size: 400% 400%;
+  animation: gradient-flow-3 10s ease-in-out infinite;
+}
+
+.animate-gradient-wave {
+  background-size: 400% 400%;
+  animation: gradient-wave 15s ease-in-out infinite;
+}
+
+.animate-gradient-pulse {
+  animation: gradient-pulse 6s ease-in-out infinite;
+}
+
+/* Apply random animations to bg-gradient classes */
+.bg-gradient-to-r,
+.bg-gradient-to-br,
+.bg-gradient-to-bl {
+  background-size: 400% 400%;
 }
 
